@@ -21,6 +21,14 @@
   version = "v3.3.2"
 
 [[projects]]
+  digest = "1:320e7ead93de9fd2b0e59b50fd92a4d50c1f8ab455d96bc2eb083267453a9709"
+  name = "github.com/asaskevich/govalidator"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ccb8e960c48f04d6935e72476ae4a51028f9e22f"
+  version = "v9"
+
+[[projects]]
   digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -65,6 +73,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:4cd45b97f006fcd976470886b5fe97f59494e0f7b8e626059500cb8ace0e4e73"
+  name = "github.com/golang/example"
+  packages = ["stringutil"]
+  pruneopts = "UT"
+  revision = "46695d81d1fae905a270fb7db8a4d11a334562fe"
+
+[[projects]]
+  branch = "master"
   digest = "1:26ee455faa224e7031355a0b51ce60c489f0fb4aa2cc96b42a622c320f0c0049"
   name = "github.com/koding/multiconfig"
   packages = ["."]
@@ -78,6 +94,22 @@
   pruneopts = "UT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:8e9c06a6265bacd03807c0e4776c91b0d36d7ea0f91c87f7f044a04c44f489b2"
+  name = "github.com/sony/sonyflake"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "fa881fb1052b152e977c41023052c2f2a1c475e9"
+
+[[projects]]
+  digest = "1:b749dfc1b2734006da71966102ca708c5575081590f4bbfa7bf6ba1979f04ee9"
+  name = "github.com/speps/go-hashids"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ad304c6ede07ca1f915c30a5510c45860aa165a7"
+  version = "v2.0.0"
 
 [[projects]]
   digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
@@ -119,12 +151,16 @@
   analyzer-version = 1
   input-imports = [
     "github.com/ant0ine/go-json-rest/rest",
+    "github.com/asaskevich/govalidator",
     "github.com/fatih/camelcase",
     "github.com/fatih/structs",
     "github.com/go-sql-driver/mysql",
     "github.com/gocraft/dbr",
     "github.com/gocraft/dbr/dialect",
+    "github.com/golang/example/stringutil",
     "github.com/koding/multiconfig",
+    "github.com/sony/sonyflake",
+    "github.com/speps/go-hashids",
     "github.com/stretchr/testify/assert",
     "golang.org/x/net/html",
   ]
