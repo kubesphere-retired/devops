@@ -1,0 +1,188 @@
+swagger: "2.0"
+info:
+  description: "kubersphere devops api"
+  version: "1.0.0"
+  title: "Kubesphere DevOps"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "apiserver.kubesphere.com:8080"
+basePath: "/api/v1alpha"
+tags:
+- name: "project"
+  description: "kubersphere devops project"
+schemes:
+- "https"
+- "http"
+paths:
+  /projects:
+    post:
+      tags:
+      - "project"
+      summary: "add a devops project"
+      description: ""
+      operationId: "addProject"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "project"
+        required: true
+        schema:
+          type : object
+          required:
+          - name
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+      responses:
+        200:
+          description: project
+          schema:
+            type : object
+            properties:
+              project_id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              creator:
+                type: string
+              create_time:
+                type: string
+              status:
+                type: string
+    get:
+      tags:
+      - "project"
+      summary: "get devops projects"
+      description: ""
+      operationId: "getProjects"
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              properties:
+                project_id:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                creator:
+                  type: string
+                create_time:
+                  type: string
+                status:
+                  type: string
+
+  /project/{project_id}:
+    get:
+      tags:
+      - "project"
+      summary: get a project
+      description: get a project
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      responses:
+        200:
+          description: a project
+          schema:
+            required:
+            - project_id
+            properties:
+              project_id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              creator:
+                type: string
+              create_time:
+                type: string
+              status:
+                type: string
+    patch:
+      tags:
+      - "project"
+      summary: update a project
+      description: update a project
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - in: body
+        name: "body"
+        description: "project"
+        required: true
+        schema:
+          type : object
+          properties:
+            description:
+              type: string
+
+
+      responses:
+        200:
+          description: a project
+          schema:
+            required:
+            - project_id
+            properties:
+              project_id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              creator:
+                type: string
+              create_time:
+                type: string
+              status:
+                type: string
+    delete:
+      tags:
+      - "project"
+      summary: delete a project
+      description: delete a project
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      responses:
+        200:
+          description: a project
+          schema:
+            required:
+            - project_id
+            properties:
+              project_id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              creator:
+                type: string
+              create_time:
+                type: string
+              status:
+                type: string
