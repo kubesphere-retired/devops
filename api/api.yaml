@@ -186,3 +186,165 @@ paths:
                 type: string
               status:
                 type: string
+
+  /projects/{project_id}/members:
+    post:
+      summary: create a member
+      description: create a member
+      tags:
+      - member
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - in: body
+        name: "body"
+        description: "project"
+        required: true
+        schema:
+          type : object
+          required:
+          - username
+          - role
+          properties:
+            username:
+              type: string
+            role:
+              type: string
+              description: "owner/maintainer/developer/reporter"
+      responses:
+        200:
+          description: OK
+          schema:
+            required:
+            - project_id
+            properties:
+              project_id:
+                type: string
+              username:
+                type: string
+              description:
+                type: string
+              role:
+                type: string
+              status:
+                type: string
+              grand_by:
+                type: string
+    get:
+      tags:
+      - member
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      summary: get project members
+      description: get project members
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              properties:
+                project_id:
+                  type: string
+                username:
+                  type: string
+                description:
+                  type: string
+                role:
+                  type: string
+                status:
+                  type: string
+                grand_by:
+                  type: string
+
+  /projects/{project_id}/members/{member_id}:
+    get:
+      tags:
+      - member
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: member_id
+        in: path
+        required: true
+        description: member's id
+        type: string
+      summary: get a member
+      description: get a member
+      responses:
+        200:
+          description: OK
+          schema:
+            required:
+            - project_id
+            properties:
+              project_id:
+                type: string
+              username:
+                type: string
+              description:
+                type: string
+              role:
+                type: string
+              status:
+                type: string
+              grand_by:
+                type: string
+    patch:
+      tags:
+      - member
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: member_id
+        in: path
+        required: true
+        description: member's id
+        type: string
+      - in: body
+        name: "body"
+        description: "member"
+        required: true
+        schema:
+          type : object
+          properties:
+            role:
+              type: string
+
+      summary: update member role
+      description: update member role
+      responses:
+        200:
+          description: OK
+    delete:
+      tags:
+      - member
+      summary: delete a member
+      description: delete a member
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: member_id
+        in: path
+        required: true
+        description: member's id
+        type: string
+      responses:
+        200:
+          description: OK
