@@ -21,7 +21,12 @@ import (
 
 func Router(s *Server) (app rest.App) {
 
-	app, err := rest.MakeRouter()
+	app, err := rest.MakeRouter(
+		rest.Get("/projects", s.Projects.GetProjectsHandler),
+		rest.Get("/projects/:id", s.Projects.GetProjectHandler),
+		rest.Post("/projects", s.Projects.CreateProjectHandler),
+		rest.Patch("/projects/:id", s.Projects.UpdateProjectHandler),
+		rest.Delete("/projects/:id", s.Projects.DeleteProjectHandler),)
 	if err != nil {
 		logger.Critical("%v", err)
 		return
