@@ -26,7 +26,12 @@ func Router(s *Server) (app rest.App) {
 		rest.Get("/projects/:id", s.Projects.GetProjectHandler),
 		rest.Post("/projects", s.Projects.CreateProjectHandler),
 		rest.Patch("/projects/:id", s.Projects.UpdateProjectHandler),
-		rest.Delete("/projects/:id", s.Projects.DeleteProjectHandler),)
+		rest.Delete("/projects/:id", s.Projects.DeleteProjectHandler),
+		rest.Get("/projects/:id/members", s.Projects.GetMembersHandler),
+		rest.Get("/projects/:id/members/:uid", s.Projects.GetMemberHandler),
+		rest.Post("/projects/:id/members", s.Projects.AddProjectMemberHandler),
+		rest.Patch("/projects/:id/members/:uid", s.Projects.UpdateMemberHandler),
+		rest.Delete("/projects/:id/members/:uid", s.Projects.DeleteMemberHandler))
 	if err != nil {
 		logger.Critical("%v", err)
 		return
