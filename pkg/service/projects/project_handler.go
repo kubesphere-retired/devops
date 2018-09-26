@@ -106,7 +106,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 	err := r.DecodeJsonPayload(request)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	project := models.NewProject(request.Name, request.Description, creator)
@@ -255,13 +255,13 @@ func (s *ProjectService) UpdateProjectHandler(w rest.ResponseWriter, r *rest.Req
 	err := r.DecodeJsonPayload(request)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if !govalidator.IsNull(request.Description) {
