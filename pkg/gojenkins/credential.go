@@ -66,7 +66,19 @@ type PrivateKeySource struct {
 type CredentialResponse struct {
 	Id          string `json:"id"`
 	TypeName    string `json:"typeName"`
-	Fingerprint string `json:"fingerprint"`
+	Fingerprint *struct {
+		FileName string `json:"fileName"`
+		Hash     string `json:"hash"`
+		Usage    []*struct {
+			Name   string `json:"name"`
+			Ranges struct {
+				Ranges []*struct {
+					Start int `json:"start"`
+					End   int `json:"end"`
+				} `json:"ranges"`
+			} `json:"ranges"`
+		} `json:"usage"`
+	} `json:"fingerprint"`
 	Description string `json:"description"`
 	Domain      string `json:"domain"`
 }
