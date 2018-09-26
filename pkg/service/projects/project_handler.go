@@ -287,5 +287,3 @@ func (s *ProjectService) UpdateProjectHandler(w rest.ResponseWriter, r *rest.Req
 	w.WriteJson(project)
 	return
 }
-
-
