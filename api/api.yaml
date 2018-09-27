@@ -11,6 +11,10 @@ basePath: "/api/v1alpha"
 tags:
 - name: "project"
   description: "kubersphere devops project"
+- name: "member"
+  description: "kubersphere devops project member"
+- name: "credential"
+  description: "kubersphere devops project credential"
 schemes:
 - "https"
 - "http"
@@ -348,3 +352,290 @@ paths:
       responses:
         200:
           description: OK
+  /projects/{project_id}/credentials:
+    post:
+      summary: create a credential
+      description: create a credential
+      tags:
+      - credential
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - in: body
+        name: "body"
+        description: "project"
+        required: true
+        schema:
+          type : object
+          required:
+          - type
+          - content
+          properties:
+            type:
+              type: string
+              description: "username_password/ssh/secret_text"
+            domain:
+              type: string
+              description: "default _"
+            content:
+              type: object
+              required:
+              - id
+              properties:
+                id:
+                  type: string
+                  description: "all credential support"
+                username:
+                  type: string
+                  description: "use in ssh/up credential"
+                password:
+                  type: string
+                  description: "use in username password credential"
+                description:
+                  type: string
+                  description: "all credential support"
+                passphrase:
+                  type: string
+                  description: "use in ssh credential"
+                private_key:
+                  type: string
+                  description: "use in ssh credential"
+                secret:
+                  type: string
+                  description: "use in secret text credential"
+
+      responses:
+        200:
+          description: OK
+          schema:
+            required:
+            - id
+            properties:
+              id:
+                type: string
+                description: "credential id"
+    get:
+      summary: get credentials
+      description: get credentials
+      tags:
+      - credential
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: domain
+        in: query
+        required: false
+        description: "if not provide,get all domains' credential"
+        type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              properties:
+                id:
+                  type: string
+                  description: "credential id"
+                type:
+                  type: string
+                  description: "credential type"
+                fingerprint:
+                  type: object
+                  description: "credentials fingerprint"
+                  properties:
+                    file_name:
+                      type: string
+                    hash:
+                      type: string
+                    usage:
+                      type: array
+                      items:
+                        properties:
+                          name:
+                            type: string
+                          ranges:
+                            type: object
+                            properties:
+                              ranges:
+                                type: array
+                                items:
+                                  properties:
+                                    start:
+                                      type: integer
+                                    end:
+                                      type: integer
+                description:
+                  type: string
+                  description: "description"
+                domain:
+                  type: string
+                  description: "credential's domain"
+
+  /projects/{project_id}/credentials/{credential_id}:
+    get:
+      summary: get one credential
+      description: get one credential
+      tags:
+      - credential
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: credential_id
+        in: path
+        required: true
+        description: credential_id
+        type: string
+      - name: domain
+        in: query
+        required: false
+        description: "if not provide,  domain _"
+        type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            properties:
+              id:
+                type: string
+                description: "credential id"
+              type:
+                type: string
+                description: "credential type"
+              fingerprint:
+                type: object
+                description: "credentials fingerprint"
+                properties:
+                  file_name:
+                    type: string
+                  hash:
+                    type: string
+                  usage:
+                    type: array
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        ranges:
+                          type: object
+                          properties:
+                            ranges:
+                              type: array
+                              items:
+                                properties:
+                                  start:
+                                    type: integer
+                                  end:
+                                    type: integer
+
+              description:
+                type: string
+                description: "description"
+              domain:
+                type: string
+                description: "credential's domain"
+    put:
+      summary: update a credential
+      description: need all field
+      tags:
+      - credential
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: credential_id
+        in: path
+        required: true
+        description: credential_id
+        type: string
+      - in: body
+        name: "body"
+        description: "project"
+        required: true
+        schema:
+          type : object
+          required:
+          - type
+          - content
+          properties:
+            domain:
+              type: string
+              description: "default _"
+            content:
+              type: object
+              required:
+              - id
+              properties:
+                id:
+                  type: string
+                  description: "all credential support"
+                username:
+                  type: string
+                  description: "use in ssh/up credential"
+                password:
+                  type: string
+                  description: "use in username password credential"
+                description:
+                  type: string
+                  description: "all credential support"
+                passphrase:
+                  type: string
+                  description: "use in ssh credential"
+                private_key:
+                  type: string
+                  description: "use in ssh credential"
+                secret:
+                  type: string
+                  description: "use in secret text credential"
+      responses:
+        200:
+          description: OK
+          schema:
+            required:
+            - id
+            properties:
+              id:
+                type: string
+                description: "credential id"
+    delete:
+      summary: delete a credential
+      description: delete a credential
+      tags:
+      - credential
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: credential_id
+        in: path
+        required: true
+        description: credential_id
+        type: string
+      - name: domain
+        in: query
+        required: false
+        description: "if not provide,  domain _"
+        type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            required:
+            - id
+            properties:
+              id:
+                type: string
+                description: "credential id"

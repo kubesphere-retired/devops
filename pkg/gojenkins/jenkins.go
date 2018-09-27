@@ -242,8 +242,8 @@ func (j *Jenkins) CopyJob(copyFrom string, newName string) (*Job, error) {
 }
 
 // Delete a job.
-func (j *Jenkins) DeleteJob(name string) (bool, error) {
-	job := Job{Jenkins: j, Raw: new(JobResponse), Base: "/job/" + name}
+func (j *Jenkins) DeleteJob(name string, parentIDs ...string) (bool, error) {
+	job := Job{Jenkins: j, Raw: new(JobResponse), Base: "/job/" + strings.Join(append(parentIDs, name), "/job/")}
 	return job.Delete()
 }
 
@@ -723,7 +723,9 @@ func (j *Jenkins) GetCredentialInFolder(domain, id string, folders ...string) (*
 	}
 	response, err := j.Requester.GetJSON(prePath+
 		fmt.Sprintf("/credentials/store/folder/domain/%s/credential/%s", domain, id),
-		responseStruct, nil)
+		responseStruct, map[string]string{
+			"depth": "2",
+		})
 	if err != nil {
 		return nil, err
 	}
@@ -752,7 +754,7 @@ func (j *Jenkins) GetCredentialsInFolder(domain string, folders ...string) ([]*C
 		response, err := j.Requester.GetJSON(prePath+
 			"/credentials/store/folder/",
 			responseStruct, map[string]string{
-				"depth": "2",
+				"depth": "3",
 			})
 		if err != nil {
 			return nil, err
