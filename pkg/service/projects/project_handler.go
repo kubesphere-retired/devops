@@ -15,9 +15,11 @@ package projects
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/asaskevich/govalidator"
+	"github.com/gocraft/dbr"
 
 	"kubesphere.io/devops/pkg/constants"
 	"kubesphere.io/devops/pkg/db"
@@ -70,27 +72,45 @@ func (s *ProjectService) GetProjectHandler(w rest.ResponseWriter, r *rest.Reques
 
 func (s *ProjectService) GetProjectsHandler(w rest.ResponseWriter, r *rest.Request) {
 	operator := userutils.GetUserNameFromRequest(r)
-	projectMemberships := make([]*models.ProjectMembership, 0)
-	_, err := s.Ds.Db.Select(models.ProjectMembershipColumns...).
-		From(models.ProjectMembershipTableName).
-		Where(db.And(
-			db.Eq(models.ProjectMembershipUsernameColumn, operator),
-			db.Eq(constants.StatusColumn, constants.StatusActive))).
-		Load(&projectMemberships)
-	if err != nil {
-		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	projectIdArray := make([]string, 0)
-	for _, projectMembership := range projectMemberships {
-		projectIdArray = append(projectIdArray, projectMembership.ProjectId)
+	id := r.URL.Query().Get("id")
+	query := s.Ds.Db.Select(models.ProjectColumns...).
+		From(models.ProjectTableName)
+	var conditions []dbr.Builder
+	switch operator {
+	case constants.KS_ADMIN:
+		if !govalidator.IsNull(id) {
+			ids := strings.Split(id, ",")
+			conditions = append(conditions, db.Eq(models.ProjectIdColumn, ids))
+		}
+	default:
+		var membershipCondition []dbr.Builder
+		membershipCondition = append(membershipCondition, db.Eq(models.ProjectMembershipUsernameColumn, operator))
+		membershipCondition = append(membershipCondition, db.Eq(constants.StatusColumn, constants.StatusActive))
+		if !govalidator.IsNull(id) {
+			ids := strings.Split(id, ",")
+			membershipCondition = append(membershipCondition, db.Eq(models.ProjectIdColumn, ids))
+		}
+		projectMemberships := make([]*models.ProjectMembership, 0)
+		_, err := s.Ds.Db.Select(models.ProjectMembershipColumns...).
+			From(models.ProjectMembershipTableName).
+			Where(db.And(membershipCondition...)).
+			Load(&projectMemberships)
+		if err != nil {
+			logger.Error("%v", err)
+			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		projectIdArray := make([]string, 0)
+		for _, projectMembership := range projectMemberships {
+			projectIdArray = append(projectIdArray, projectMembership.ProjectId)
+		}
+		conditions = append(conditions, db.Eq(models.ProjectIdColumn, projectIdArray))
 	}
 	projects := make([]*models.Project, 0)
-	_, err = s.Ds.Db.Select(models.ProjectColumns...).
-		From(models.ProjectTableName).
-		Where(db.Eq(models.ProjectIdColumn, projectIdArray)).
-		Load(&projects)
+	if len(conditions) > 0 {
+		query.Where(db.And(conditions...))
+	}
+	_, err := query.Load(&projects)
 	if err != nil {
 		logger.Error("%v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)

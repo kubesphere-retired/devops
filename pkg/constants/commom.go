@@ -36,3 +36,7 @@ const (
 	VisibilityPrivate = "private"
 	VisibilityPublic  = "public"
 )
+
+const (
+	KS_ADMIN = "admin"
+)
