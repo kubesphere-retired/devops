@@ -29,6 +29,14 @@
   version = "v9"
 
 [[projects]]
+  digest = "1:f25dfe4538112147d22e4c8437efbc2e216112bec37277534ffe146935064ea8"
+  name = "github.com/beevik/etree"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9d7e8feddccb4ed1b8afb54e368bd323d2ff652c"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -160,6 +168,7 @@
   input-imports = [
     "github.com/ant0ine/go-json-rest/rest",
     "github.com/asaskevich/govalidator",
+    "github.com/beevik/etree",
     "github.com/fatih/camelcase",
     "github.com/fatih/structs",
     "github.com/go-sql-driver/mysql",

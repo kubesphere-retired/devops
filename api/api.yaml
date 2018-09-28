@@ -639,3 +639,504 @@ paths:
               id:
                 type: string
                 description: "credential id"
+
+  /projects/{project_id}/pipelines:
+    post:
+      summary: create a pipeline
+      description: create a pipeline
+      tags:
+      - pipeline
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - in: body
+        name: "body"
+        description: "pipeline"
+        required: true
+        schema:
+          type : object
+          required:
+          - username
+          - role
+          properties:
+            type:
+              type: string
+              description: job type
+            define:
+              type: object
+              description: pipeline job config
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                discarder:
+                  type: object
+                  properties:
+                    days_to_keep:
+                      type: string
+                      description: -1 for nothing
+                    num_to_keep:
+                      type: string
+                      description: -1 for nothing
+                parameters:
+                  type: array
+                  items:
+                    properties:
+                      type:
+                        type: string
+                        description: string/choice/text/boolean/file
+                      name:
+                        type: string
+                      default_value:
+                        type: string
+                      description:
+                        type: string
+                disable_concurrent:
+                  type: boolean
+                timer_trigger:
+                  type: object
+                  properties:
+                    cron:
+                      type: string
+                remote_trigger:
+                  type: object
+                  properties:
+                    token:
+                      type: string
+                jenkinsfile:
+                  type: string
+            another_define:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                discarder:
+                  type: object
+                  properties:
+                    days_to_keep:
+                      type: string
+                      description: -1 for nothing
+                    num_to_keep:
+                      type: string
+                      description: -1 for nothing
+                timer_trigger:
+                  type: object
+                  properties:
+                    cron:
+                      type: string
+                    interval:
+                      type: string
+                script_path:
+                  type: string
+                source:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      description: git/github
+                    define:
+                      type: object
+                      description: git
+                      properties:
+                        url:
+                          type: string
+                        credential_id:
+                          type: string
+                        discover_branches:
+                          type: boolean
+                    another_define:
+                      type: object
+                      description: github
+                      properties:
+                        owner:
+                          type: string
+                        repo:
+                          type: string
+                        credential_id:
+                          type: boolean
+                        api_uri:
+                          type: string
+                        discover_branches:
+                          type: integer
+                          description: "1:除了同时做为PR的branch 2:只有branche同时作为PR 3:所有分支"
+                        discover_pr_from_origin:
+                          type: integer
+                          description: "1:和目标分支进行合并 2:PR分支 :与目标分支进行合并，并为当前PR分支"
+                        discover_pr_from_forks:
+                          type: object
+                          properties:
+                            strategy:
+                              type: integer
+                              description: "1:和目标分支进行合并 2:PR分支 3:与目标分支进行合并，并为当前PR分支"
+                            trust:
+                              type: integer
+                              description: "1:贡献者 2:所有人 3:有写权限的人 4:没有人"
+
+      responses:
+        200:
+          description: OK
+          schema:
+            required:
+            - id
+            properties:
+              id:
+                type: string
+                description: "pipeline id"
+  /projects/{project_id}/pipelines/{pipeline_id}:
+    delete:
+      summary: delete a pipeline
+      description: delete a pipeline
+      tags:
+      - pipeline
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: pipeline_id
+        in: path
+        required: true
+        description: pipeline_id
+        type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            required:
+            - id
+            properties:
+              id:
+                type: string
+                description: "pipeline id"
+    put:
+      summary: update a pipeline's config
+      description: update a pipelin's config
+      tags:
+      - pipeline
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: pipeline_id
+        in: path
+        required: true
+        description: pipeline_id
+        type: string
+      - in: body
+        name: "body"
+        description: "pipeline"
+        required: true
+        schema:
+          type : object
+          required:
+          - username
+          - role
+          properties:
+            type:
+              type: string
+              description: job type
+            define:
+              type: object
+              description: pipeline job config
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                discarder:
+                  type: object
+                  properties:
+                    days_to_keep:
+                      type: string
+                      description: -1 for nothing
+                    num_to_keep:
+                      type: string
+                      description: -1 for nothing
+                parameters:
+                  type: array
+                  items:
+                    properties:
+                      type:
+                        type: string
+                        description: string/choice/text/boolean/file
+                      name:
+                        type: string
+                      default_value:
+                        type: string
+                      description:
+                        type: string
+                disable_concurrent:
+                  type: boolean
+                timer_trigger:
+                  type: object
+                  properties:
+                    cron:
+                      type: string
+                remote_trigger:
+                  type: object
+                  properties:
+                    token:
+                      type: string
+                jenkinsfile:
+                  type: string
+            another_define:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                discarder:
+                  type: object
+                  properties:
+                    days_to_keep:
+                      type: string
+                      description: -1 for nothing
+                    num_to_keep:
+                      type: string
+                      description: -1 for nothing
+                timer_trigger:
+                  type: object
+                  properties:
+                    cron:
+                      type: string
+                    interval:
+                      type: string
+                script_path:
+                  type: string
+                source:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      description: git/github
+                    define:
+                      type: object
+                      description: git
+                      properties:
+                        url:
+                          type: string
+                        credential_id:
+                          type: string
+                        discover_branches:
+                          type: boolean
+                    another_define:
+                      type: object
+                      description: github
+                      properties:
+                        owner:
+                          type: string
+                        repo:
+                          type: string
+                        credential_id:
+                          type: boolean
+                        api_uri:
+                          type: string
+                        discover_branches:
+                          type: integer
+                          description: "1:除了同时做为PR的branch 2:只有branche同时作为PR 3:所有分支"
+                        discover_pr_from_origin:
+                          type: integer
+                          description: "1:和目标分支进行合并 2:PR分支 :与目标分支进行合并，并为当前PR分支"
+                        discover_pr_from_forks:
+                          type: object
+                          properties:
+                            strategy:
+                              type: integer
+                              description: "1:和目标分支进行合并 2:PR分支 3:与目标分支进行合并，并为当前PR分支"
+                            trust:
+                              type: integer
+                              description: "1:贡献者 2:所有人 3:有写权限的人 4:没有人"
+
+      responses:
+        200:
+          description: OK
+          schema:
+            required:
+            - id
+            properties:
+              id:
+                type: string
+                description: "pipeline id"
+
+  /projects/{project_id}/pipelines/{pipeline_id}/config:
+
+    get:
+      summary: get a pipeline's config
+      description: get a pipelin's config
+      tags:
+      - pipeline
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: pipeline_id
+        in: path
+        required: true
+        description: pipeline_id
+        type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            properties:
+              type:
+                type: string
+                description: job type
+              define:
+                type: object
+                description: pipeline job config
+                properties:
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  discarder:
+                    type: object
+                    properties:
+                      days_to_keep:
+                        type: string
+                        description: -1 for nothing
+                      num_to_keep:
+                        type: string
+                        description: -1 for nothing
+                  parameters:
+                    type: array
+                    items:
+                      properties:
+                        type:
+                          type: string
+                          description: string/choice/text/boolean/file
+                        name:
+                          type: string
+                        default_value:
+                          type: string
+                        description:
+                          type: string
+                  disable_concurrent:
+                    type: boolean
+                  timer_trigger:
+                    type: object
+                    properties:
+                      cron:
+                        type: string
+                  remote_trigger:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                  jenkinsfile:
+                    type: string
+              another_define:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  discarder:
+                    type: object
+                    properties:
+                      days_to_keep:
+                        type: string
+                        description: -1 for nothing
+                      num_to_keep:
+                        type: string
+                        description: -1 for nothing
+                  timer_trigger:
+                    type: object
+                    properties:
+                      cron:
+                        type: string
+                      interval:
+                        type: string
+                  script_path:
+                    type: string
+                  source:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        description: git/github
+                      define:
+                        type: object
+                        description: git
+                        properties:
+                          url:
+                            type: string
+                          credential_id:
+                            type: string
+                          discover_branches:
+                            type: boolean
+                      another_define:
+                        type: object
+                        description: github
+                        properties:
+                          owner:
+                            type: string
+                          repo:
+                            type: string
+                          credential_id:
+                            type: boolean
+                          api_uri:
+                            type: string
+                          discover_branches:
+                            type: integer
+                            description: "1:除了同时做为PR的branch 2:只有branche同时作为PR 3:所有分支"
+                          discover_pr_from_origin:
+                            type: integer
+                            description: "1:和目标分支进行合并 2:PR分支 3:与目标分支进行合并，并为当前PR分支"
+                          discover_pr_from_forks:
+                            type: object
+                            properties:
+                              strategy:
+                                type: integer
+                                description: "1:和目标分支进行合并 2:PR分支 3:与目标分支进行合并，并为当前PR分支"
+                              trust:
+                                type: integer
+                                description: "1:贡献者 2:所有人 3:有写权限的人 4:没有人"
+  /projects/{project_id}/pipelines/{pipeline_id}/scm:
+    get:
+      summary: get a pipeline's scm info
+      description: get a pipeline's scm info
+      tags:
+      - pipeline
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: project's id
+        type: string
+      - name: pipeline_id
+        in: path
+        required: true
+        description: pipeline_id
+        type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            properties:
+              type:
+                type: string
+                description: scm type
+              repo:
+                type: string
+                description: scm repo "github is owner:repo, git is the link"
+              path:
+                type: string
+                description: jenkinsfile's path
+              api_uri:
+                type: string
+                description: api uri, may use in github enterprise
