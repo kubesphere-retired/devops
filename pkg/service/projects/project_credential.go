@@ -27,19 +27,19 @@ func formatCredentialResponse(jenkinsCredentialResponse *gojenkins.CredentialRes
 	response := &CredentialResponse{}
 	response.Id = jenkinsCredentialResponse.Id
 	response.Description = jenkinsCredentialResponse.Description
-	if jenkinsCredentialResponse.Fingerprint != nil {
+	if jenkinsCredentialResponse.Fingerprint != nil && jenkinsCredentialResponse.Fingerprint.Hash != "" {
 		response.Fingerprint = &struct {
-			FileName string `json:"file_name"`
-			Hash     string `json:"hash"`
+			FileName string `json:"file_name,omitempty"`
+			Hash     string `json:"hash,omitempty"`
 			Usage    []*struct {
-				Name   string `json:"name"`
+				Name   string `json:"name,omitempty"`
 				Ranges struct {
 					Ranges []*struct {
 						Start int `json:"start"`
 						End   int `json:"end"`
 					} `json:"ranges"`
 				} `json:"ranges"`
-			} `json:"usage"`
+			} `json:"usage,omitempty"`
 		}{}
 		response.Fingerprint.FileName = jenkinsCredentialResponse.Fingerprint.FileName
 		response.Fingerprint.Hash = jenkinsCredentialResponse.Fingerprint.Hash
