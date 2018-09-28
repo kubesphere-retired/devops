@@ -446,31 +446,7 @@ paths:
                 type:
                   type: string
                   description: "credential type"
-                fingerprint:
-                  type: object
-                  description: "credentials fingerprint"
-                  properties:
-                    file_name:
-                      type: string
-                    hash:
-                      type: string
-                    usage:
-                      type: array
-                      items:
-                        properties:
-                          name:
-                            type: string
-                          ranges:
-                            type: object
-                            properties:
-                              ranges:
-                                type: array
-                                items:
-                                  properties:
-                                    start:
-                                      type: integer
-                                    end:
-                                      type: integer
+
                 description:
                   type: string
                   description: "description"

@@ -69,18 +69,18 @@ type CredentialResponse struct {
 	Id          string `json:"id"`
 	Type        string `json:"type"`
 	Fingerprint *struct {
-		FileName string `json:"file_name"`
-		Hash     string `json:"hash"`
+		FileName string `json:"file_name,omitempty"`
+		Hash     string `json:"hash,omitempty"`
 		Usage    []*struct {
-			Name   string `json:"name"`
+			Name   string `json:"name,omitempty"`
 			Ranges struct {
 				Ranges []*struct {
 					Start int `json:"start"`
 					End   int `json:"end"`
 				} `json:"ranges"`
 			} `json:"ranges"`
-		} `json:"usage"`
-	} `json:"fingerprint"`
+		} `json:"usage,omitempty"`
+	} `json:"fingerprint,omitempty"`
 	Description string `json:"description"`
 	Domain      string `json:"domain"`
 }
