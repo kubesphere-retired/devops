@@ -754,7 +754,7 @@ func (j *Jenkins) GetCredentialsInFolder(domain string, folders ...string) ([]*C
 		response, err := j.Requester.GetJSON(prePath+
 			"/credentials/store/folder/",
 			responseStruct, map[string]string{
-				"depth": "3",
+				"depth": "2",
 			})
 		if err != nil {
 			return nil, err
