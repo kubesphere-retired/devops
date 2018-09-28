@@ -59,6 +59,7 @@ type ParameterDefinition struct {
 }
 
 type JobResponse struct {
+	Class              string `json:"_class"`
 	Actions            []generalObj
 	Buildable          bool `json:"buildable"`
 	Builds             []JobBuild
