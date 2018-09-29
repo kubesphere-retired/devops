@@ -94,12 +94,12 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 			Name string `json:"name"`
 		}{Name: pipeline.Name})
 		return
+
 	default:
 		err := fmt.Errorf("error unsupport job type")
 		logger.Error("%v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
-
 	}
 }
 
