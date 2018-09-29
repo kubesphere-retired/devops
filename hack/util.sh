@@ -84,6 +84,10 @@ util::find_files() {
 }
 
 util::find_diff_files(){
-  git diff --name-only --diff-filter=ad | grep -E "^(test|cmd|pkg)/.+\.go"
+  git diff --name-only --diff-filter=ad HEAD^ HEAD | grep -E "^(test|cmd|pkg)/.+\.go"
+}
+
+util::find_local_change_files(){
+  git diff --name-only --diff-filter=ad  | grep -E "^(test|cmd|pkg)/.+\.go"
 }
 
