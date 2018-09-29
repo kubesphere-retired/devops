@@ -35,7 +35,7 @@ else
 fi
 
 if [ -z $bad_files ]; then
-    echo "No go files need to format. Done"
+    echo "No go files need to format. DONE"
     exit 0
 fi
 for file in $bad_files
@@ -48,5 +48,5 @@ if [ $? -ne 0 ]; then
     echo "Cannot to format source codes, Please check it manualy "
     exit 1
 fi
-echo "Format is Done"
+echo "Format is DONE"
 
