@@ -6,6 +6,6 @@ build:
 local-run:
 	scripts/run-local-go.sh
 image:
-	scripts/build-image.sh
+	hack/build-image.sh devops/apiserver:0.1
 clean:
 	rm -rf cmd/server
