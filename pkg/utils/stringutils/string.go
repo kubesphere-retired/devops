@@ -14,6 +14,8 @@ limitations under the License.
 package stringutils
 
 import (
+	"net/http"
+	"strconv"
 	"unicode/utf8"
 
 	"github.com/asaskevich/govalidator"
@@ -74,4 +76,14 @@ func Reverse(s string) string {
 		utf8.EncodeRune(buf[size-start:], r)
 	}
 	return string(buf)
+}
+
+func GetJenkinsStatusCode(jenkinsErr error) int {
+	if code, err := strconv.Atoi(jenkinsErr.Error()); err == nil {
+		message := http.StatusText(code)
+		if !govalidator.IsNull(message) {
+			return code
+		}
+	}
+	return http.StatusInternalServerError
 }
