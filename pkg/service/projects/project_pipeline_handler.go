@@ -16,10 +16,11 @@ package projects
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
+
 	"net/http"
 
 	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/mitchellh/mapstructure"
 
 	"kubesphere.io/devops/pkg/logger"
 	"kubesphere.io/devops/pkg/utils/userutils"
