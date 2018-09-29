@@ -16,13 +16,13 @@ package projects
 import (
 	"encoding/json"
 	"fmt"
-
 	"net/http"
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/mitchellh/mapstructure"
 
 	"kubesphere.io/devops/pkg/logger"
+	"kubesphere.io/devops/pkg/utils/stringutils"
 	"kubesphere.io/devops/pkg/utils/userutils"
 )
 
@@ -63,7 +63,7 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		_, err = s.Ds.Jenkins.CreateJobInFolder(config, pipeline.Name, projectId)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		w.WriteJson(struct {
@@ -78,7 +78,7 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		config, err := createMultiBranchPipeline(pipeline)
+		config, err := createMultiBranchPipelineConfigXml(pipeline)
 		if err != nil {
 			logger.Error("%v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
@@ -87,19 +87,19 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		_, err = s.Ds.Jenkins.CreateJobInFolder(config, pipeline.Name, projectId)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		w.WriteJson(struct {
 			Name string `json:"name"`
 		}{Name: pipeline.Name})
 		return
+
 	default:
 		err := fmt.Errorf("error unsupport job type")
 		logger.Error("%v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
-
 	}
 }
 
@@ -116,7 +116,7 @@ func (s *ProjectService) DeletePipelineHandler(w rest.ResponseWriter, r *rest.Re
 	_, err = s.Ds.Jenkins.DeleteJob(pipelineId, projectId)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	w.WriteJson(struct {
@@ -140,7 +140,7 @@ func (s *ProjectService) UpdatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 
@@ -162,13 +162,13 @@ func (s *ProjectService) UpdatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		job, err := s.Ds.Jenkins.GetJob(pipelineId, projectId)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		err = job.UpdateConfig(config)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		w.WriteJson(struct {
@@ -183,7 +183,7 @@ func (s *ProjectService) UpdatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		config, err := createMultiBranchPipeline(multiBranchPipeline)
+		config, err := createMultiBranchPipelineConfigXml(multiBranchPipeline)
 		if err != nil {
 			logger.Error("%v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
@@ -192,13 +192,13 @@ func (s *ProjectService) UpdatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		job, err := s.Ds.Jenkins.GetJob(pipelineId, projectId)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		err = job.UpdateConfig(config)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		w.WriteJson(struct {
@@ -227,7 +227,7 @@ func (s *ProjectService) GetPipelineHandler(w rest.ResponseWriter, r *rest.Reque
 	job, err := s.Ds.Jenkins.GetJob(pipelineId, projectId)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	switch job.Raw.Class {
@@ -235,7 +235,7 @@ func (s *ProjectService) GetPipelineHandler(w rest.ResponseWriter, r *rest.Reque
 		config, err := job.GetConfig()
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		pipeline, err := parsePipelineConfigXml(config)
@@ -267,7 +267,7 @@ func (s *ProjectService) GetPipelineHandler(w rest.ResponseWriter, r *rest.Reque
 		config, err := job.GetConfig()
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		pipeline, err := parseMultiBranchPipelineConfigXml(config)
@@ -316,7 +316,7 @@ func (s *ProjectService) GetPipelineScmHandler(w rest.ResponseWriter, r *rest.Re
 	job, err := s.Ds.Jenkins.GetJob(pipelineId, projectId)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	switch job.Raw.Class {
@@ -324,7 +324,7 @@ func (s *ProjectService) GetPipelineScmHandler(w rest.ResponseWriter, r *rest.Re
 		config, err := job.GetConfig()
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		scm, err := parseMultiBranchPipelineScm(config)

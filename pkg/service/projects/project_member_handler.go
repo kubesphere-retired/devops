@@ -15,7 +15,6 @@ package projects
 
 import (
 	"fmt"
-
 	"net/http"
 
 	"github.com/ant0ine/go-json-rest/rest"
@@ -26,6 +25,7 @@ import (
 	"kubesphere.io/devops/pkg/logger"
 	"kubesphere.io/devops/pkg/models"
 	"kubesphere.io/devops/pkg/utils/reflectutils"
+	"kubesphere.io/devops/pkg/utils/stringutils"
 	"kubesphere.io/devops/pkg/utils/userutils"
 )
 
@@ -93,56 +93,56 @@ func (s *ProjectService) AddProjectMemberHandler(w rest.ResponseWriter, r *rest.
 	if govalidator.IsNull(request.Username) {
 		err := fmt.Errorf("error need username")
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if !reflectutils.In(request.Role, AllRoleSlice) {
 		err := fmt.Errorf("err role [%s] not in [%s]", request.Role,
 			AllRoleSlice)
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	globalRole, err := s.Ds.Jenkins.GetGlobalRole(constants.JenkinsAllUserRoleName)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = globalRole.AssignRole(request.Username)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	projectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(projectId, request.Role))
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = projectRole.AssignRole(request.Username)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	pipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(projectId, request.Role))
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = pipelineRole.AssignRole(request.Username)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	projectMembership := models.NewProjectMemberShip(request.Username, projectId, request.Role, operator)
@@ -173,13 +173,13 @@ func (s *ProjectService) UpdateMemberHandler(w rest.ResponseWriter, r *rest.Requ
 	if !reflectutils.In(request.Role, AllRoleSlice) {
 		err := fmt.Errorf("err role [%s] not in [%s]", request.Role, AllRoleSlice)
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	oldMembership := &models.ProjectMembership{}
@@ -198,51 +198,51 @@ func (s *ProjectService) UpdateMemberHandler(w rest.ResponseWriter, r *rest.Requ
 	oldProjectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(projectId, oldMembership.Role))
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = oldProjectRole.UnAssignRole(username)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 
 	oldPipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(projectId, oldMembership.Role))
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = oldPipelineRole.UnAssignRole(username)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 
 	projectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(projectId, request.Role))
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = projectRole.AssignRole(username)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	pipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(projectId, request.Role))
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = pipelineRole.AssignRole(username)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	_, err = s.Ds.Db.Update(models.ProjectMembershipTableName).
@@ -302,26 +302,26 @@ func (s *ProjectService) DeleteMemberHandler(w rest.ResponseWriter, r *rest.Requ
 	oldProjectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(projectId, oldMembership.Role))
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = oldProjectRole.UnAssignRole(username)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 
 	oldPipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(projectId, oldMembership.Role))
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = oldPipelineRole.UnAssignRole(username)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 

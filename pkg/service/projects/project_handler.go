@@ -15,6 +15,7 @@ package projects
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/ant0ine/go-json-rest/rest"
@@ -25,6 +26,7 @@ import (
 	"kubesphere.io/devops/pkg/db"
 	"kubesphere.io/devops/pkg/logger"
 	"kubesphere.io/devops/pkg/models"
+	"kubesphere.io/devops/pkg/utils/stringutils"
 	"kubesphere.io/devops/pkg/utils/userutils"
 )
 
@@ -133,7 +135,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 	_, err = s.Ds.Jenkins.CreateFolder(project.ProjectId, project.Description)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	for role, permission := range JenkinsProjectPermissionMap {
@@ -141,7 +143,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 			GetProjectRolePattern(project.ProjectId), permission, true)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 	}
@@ -150,7 +152,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 			GetPipelineRolePattern(project.ProjectId), permission, true)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 	}
@@ -158,13 +160,13 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 	globalRole, err := s.Ds.Jenkins.GetGlobalRole(constants.JenkinsAllUserRoleName)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = globalRole.AssignRole(creator)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 
@@ -184,13 +186,13 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 	pipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(project.ProjectId, ProjectOwner))
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = pipelineRole.AssignRole(creator)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	_, err = s.Ds.Db.InsertInto(models.ProjectTableName).
@@ -223,9 +225,9 @@ func (s *ProjectService) DeleteProjectHandler(w rest.ResponseWriter, r *rest.Req
 		return
 	}
 	_, err = s.Ds.Jenkins.DeleteJob(projectId)
-	if err != nil && err.Error() != "404" {
+	if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	roleNames := make([]string, 0)
@@ -236,7 +238,7 @@ func (s *ProjectService) DeleteProjectHandler(w rest.ResponseWriter, r *rest.Req
 	err = s.Ds.Jenkins.DeleteProjectRoles(roleNames...)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	_, err = s.Ds.Db.DeleteFrom(models.ProjectMembershipTableName).
@@ -281,7 +283,7 @@ func (s *ProjectService) UpdateProjectHandler(w rest.ResponseWriter, r *rest.Req
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusBadRequest)
+		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	if !govalidator.IsNull(request.Description) {

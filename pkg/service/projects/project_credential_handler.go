@@ -21,6 +21,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"kubesphere.io/devops/pkg/logger"
+	"kubesphere.io/devops/pkg/utils/stringutils"
 	"kubesphere.io/devops/pkg/utils/userutils"
 )
 
@@ -117,7 +118,7 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			UPRequest.Username, UPRequest.Password, UPRequest.Description, projectId)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		w.WriteJson(struct {
@@ -137,7 +138,7 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			SshRequest.Username, SshRequest.Passphrase, SshRequest.PrivateKey, SshRequest.Description, projectId)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		w.WriteJson(struct {
@@ -157,7 +158,7 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			TextRequest.Secret, TextRequest.Description, projectId)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		w.WriteJson(struct {
@@ -167,7 +168,7 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 	default:
 		err := fmt.Errorf("error unsupport  credential type")
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 }
@@ -192,7 +193,7 @@ func (s *ProjectService) DeleteCredentialHandler(w rest.ResponseWriter, r *rest.
 	id, err := s.Ds.Jenkins.DeleteCredentialInFolder(request.Domain, credentialId, projectId)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	w.WriteJson(struct {
@@ -222,7 +223,7 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 	jenkinsCredential, err := s.Ds.Jenkins.GetCredentialInFolder(request.Domain, credentialId, projectId)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	credentialType := CredentialTypeMap[jenkinsCredential.TypeName]
@@ -240,7 +241,7 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 			UPRequest.Username, UPRequest.Password, UPRequest.Description, projectId)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		w.WriteJson(struct {
@@ -282,7 +283,7 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 			TextRequest.Secret, TextRequest.Description, projectId)
 		if err != nil {
 			logger.Error("%v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		w.WriteJson(struct {
@@ -311,7 +312,7 @@ func (s *ProjectService) GetCredentialHandler(w rest.ResponseWriter, r *rest.Req
 	credentialResponse, err := s.Ds.Jenkins.GetCredentialInFolder(domain, credentialId, projectId)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	response := formatCredentialResponse(credentialResponse)
@@ -332,7 +333,7 @@ func (s *ProjectService) GetCredentialsHandler(w rest.ResponseWriter, r *rest.Re
 	jenkinsCredentialResponse, err := s.Ds.Jenkins.GetCredentialsInFolder(domain, projectId)
 	if err != nil {
 		logger.Error("%v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	response := formatCredentialsResponse(jenkinsCredentialResponse)

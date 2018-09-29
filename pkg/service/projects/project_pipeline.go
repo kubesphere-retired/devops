@@ -509,7 +509,7 @@ func parseMultiBranchPipelineScm(config string) (*ScmInfo, error) {
 	return nil, nil
 
 }
-func createMultiBranchPipeline(pipeline *MultiBranchPipeline) (string, error) {
+func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, error) {
 	doc := etree.NewDocument()
 	xmlString := `
 <?xml version='1.0' encoding='UTF-8'?>
