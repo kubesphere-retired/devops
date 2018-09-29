@@ -1,0 +1,13 @@
+language: go
+
+go_import_path: kubesphere.io/devops
+
+go:
+  - "1.10.3"
+
+install:
+  - chmod +x hack/*.sh
+  - go get golang.org/x/tools/cmd/goimports
+
+scripts:
+  - make check

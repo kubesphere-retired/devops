@@ -19,4 +19,5 @@ gen### Go template
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+cmd/server
 
