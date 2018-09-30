@@ -443,6 +443,9 @@ paths:
                 id:
                   type: string
                   description: "credential id"
+                display_name:
+                  type: string
+                  description: "display name"
                 type:
                   type: string
                   description: "credential type"
@@ -487,6 +490,8 @@ paths:
               type:
                 type: string
                 description: "credential type"
+              display_name:
+                type: string
               fingerprint:
                 type: object
                 description: "credentials fingerprint"
