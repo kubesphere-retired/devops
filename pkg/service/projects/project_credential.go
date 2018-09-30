@@ -27,6 +27,7 @@ func formatCredentialResponse(jenkinsCredentialResponse *gojenkins.CredentialRes
 	response := &CredentialResponse{}
 	response.Id = jenkinsCredentialResponse.Id
 	response.Description = jenkinsCredentialResponse.Description
+	response.DisplayName = jenkinsCredentialResponse.DisplayName
 	if jenkinsCredentialResponse.Fingerprint != nil && jenkinsCredentialResponse.Fingerprint.Hash != "" {
 		response.Fingerprint = &struct {
 			FileName string `json:"file_name,omitempty"`
