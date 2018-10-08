@@ -1121,3 +1121,20 @@ paths:
               api_uri:
                 type: string
                 description: api uri, may use in github enterprise
+
+  /projects/default_roles/:
+    get:
+      summary: get a project's default roles
+      description: get a project's default roles
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+
