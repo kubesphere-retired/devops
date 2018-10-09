@@ -29,6 +29,30 @@ import (
 	"kubesphere.io/devops/pkg/utils/userutils"
 )
 
+type Role struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+var DefaultRoles = []*Role{
+	{
+		Name:        ProjectMaintainer,
+		Description: "项目的主要维护者，可以进行项目内的凭证配置、pipeline配置等操作",
+	},
+	{
+		Name:        ProjectOwner,
+		Description: "项目的所有者，可以进行项目的所有操作",
+	},
+	{
+		Name:        ProjectDeveloper,
+		Description: "项目的开发者，可以进行pipeline的触发以及查看",
+	},
+	{
+		Name:        ProjectReporter,
+		Description: "项目的观察者，可以查看pipeline的运行情况",
+	},
+}
+
 func (s *ProjectService) GetMembersHandler(w rest.ResponseWriter, r *rest.Request) {
 	projectId := r.PathParams["id"]
 	operator := userutils.GetUserNameFromRequest(r)
@@ -336,5 +360,10 @@ func (s *ProjectService) DeleteMemberHandler(w rest.ResponseWriter, r *rest.Requ
 		return
 	}
 	w.WriteJson(nil)
+	return
+}
+
+func (s *ProjectService) GetProjectDefaultRolesHandler(w rest.ResponseWriter, r *rest.Request) {
+	w.WriteJson(DefaultRoles)
 	return
 }
