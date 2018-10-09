@@ -359,7 +359,9 @@ func (s *ProjectService) DeleteMemberHandler(w rest.ResponseWriter, r *rest.Requ
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteJson(nil)
+	w.WriteJson(struct {
+		Username string `json:"username"`
+	}{Username: username})
 	return
 }
 
