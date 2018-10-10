@@ -69,6 +69,7 @@ type CopySshCredentialRequest struct {
 type CredentialResponse struct {
 	Id          string `json:"id"`
 	Type        string `json:"type"`
+	DisplayName string `json:"display_name"`
 	Fingerprint *struct {
 		FileName string `json:"file_name,omitempty"`
 		Hash     string `json:"hash,omitempty"`

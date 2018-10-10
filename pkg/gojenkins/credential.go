@@ -66,6 +66,7 @@ type PrivateKeySource struct {
 type CredentialResponse struct {
 	Id          string `json:"id"`
 	TypeName    string `json:"typeName"`
+	DisplayName string `json:"displayName"`
 	Fingerprint *struct {
 		FileName string `json:"fileName,omitempty"`
 		Hash     string `json:"hash,omitempty"`
