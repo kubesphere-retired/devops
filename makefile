@@ -8,9 +8,9 @@ fmt:
 fmt-all:
 	hack/fmt.sh -a
 build:
-	scripts/build-go.sh
+	hack/build-go.sh
 local-run:
-	scripts/run-local-go.sh
+	hack/run-local-go.sh
 image:
 	hack/build-image.sh $(TAG)
 clean:
