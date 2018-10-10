@@ -63,9 +63,14 @@ func (s *ProjectService) GetProjectHandler(w rest.ResponseWriter, r *rest.Reques
 		From(models.ProjectTableName).
 		Where(db.Eq(models.ProjectIdColumn, projectId)).
 		LoadOne(project)
-	if err != nil {
+	if err != nil && err != dbr.ErrNotFound {
 		logger.Error("%v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err == dbr.ErrNotFound {
+		logger.Error("%v", err)
+		rest.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	w.WriteJson(project)
