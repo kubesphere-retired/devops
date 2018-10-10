@@ -18,7 +18,7 @@ import (
 
 	"github.com/golang/example/stringutil"
 	"github.com/sony/sonyflake"
-	"github.com/speps/go-hashids"
+	hashids "github.com/speps/go-hashids"
 )
 
 var sf *sonyflake.Sonyflake
