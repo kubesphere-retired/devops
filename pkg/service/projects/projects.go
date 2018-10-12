@@ -17,7 +17,6 @@ import (
 	"fmt"
 
 	"kubesphere.io/devops/pkg/db"
-
 	"kubesphere.io/devops/pkg/ds"
 	"kubesphere.io/devops/pkg/gojenkins"
 	"kubesphere.io/devops/pkg/models"

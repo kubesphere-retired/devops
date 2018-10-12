@@ -15,6 +15,7 @@ package service
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ant0ine/go-json-rest/rest"
 
@@ -36,6 +37,15 @@ func Serve(cfg *config.Config) {
 	s := Server{}
 	s.Ds = ds.NewDs(cfg)
 	s.Projects = &projects.ProjectService{Ds: s.Ds}
+
+	// func to connect jenkins solve https://issues.jenkins-ci.org/browse/JENKINS-2489
+	go func() {
+		for {
+			s.Ds.Jenkins.Info()
+			time.Sleep(time.Second * 30)
+		}
+	}()
+
 	api := rest.NewApi()
 	api.Use(rest.DefaultDevStack...)
 	api.Use(&rest.AuthBasicMiddleware{
