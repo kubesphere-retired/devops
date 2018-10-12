@@ -254,7 +254,3 @@ func (s *ProjectService) checkProjectUserInRole(username, projectId string, role
 	}
 	return nil
 }
-
-func (s *ProjectService) CheckJenkinsConn() {
-	s.Ds.Jenkins.Info()
-}

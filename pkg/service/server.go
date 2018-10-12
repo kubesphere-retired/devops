@@ -40,8 +40,10 @@ func Serve(cfg *config.Config) {
 
 	// func to connect jenkins solve https://issues.jenkins-ci.org/browse/JENKINS-2489
 	go func() {
-		s.Projects.CheckJenkinsConn()
-		time.Sleep(time.Second * 30)
+		for {
+			s.Ds.Jenkins.Info()
+			time.Sleep(time.Second * 30)
+		}
 	}()
 
 	api := rest.NewApi()
