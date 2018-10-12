@@ -17,7 +17,6 @@ import (
 	"fmt"
 
 	"kubesphere.io/devops/pkg/db"
-
 	"kubesphere.io/devops/pkg/ds"
 	"kubesphere.io/devops/pkg/gojenkins"
 	"kubesphere.io/devops/pkg/models"
@@ -254,4 +253,8 @@ func (s *ProjectService) checkProjectUserInRole(username, projectId string, role
 		return fmt.Errorf("user [%s] in project [%s] role is not in %s", username, projectId, roles)
 	}
 	return nil
+}
+
+func (s *ProjectService) CheckJenkinsConn() {
+	s.Ds.Jenkins.Info()
 }
