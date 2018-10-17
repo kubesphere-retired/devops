@@ -48,15 +48,6 @@ func Serve(cfg *config.Config) {
 
 	api := rest.NewApi()
 	api.Use(rest.DefaultDevStack...)
-	api.Use(&rest.AuthBasicMiddleware{
-		Realm: "temp",
-		Authenticator: func(userId string, password string) bool {
-			if userId == "" {
-				return false
-			}
-			return true
-		},
-	})
 	api.SetApp(Router(&s))
 	http.Handle(APIVersion+"/", http.StripPrefix(APIVersion, api.MakeHandler()))
 	logger.Critical("%v", http.ListenAndServe(":8080", nil))
