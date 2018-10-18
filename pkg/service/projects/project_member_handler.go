@@ -36,12 +36,12 @@ type Role struct {
 
 var DefaultRoles = []*Role{
 	{
-		Name:        ProjectMaintainer,
-		Description: "项目的主要维护者，可以进行项目内的凭证配置、pipeline配置等操作",
-	},
-	{
 		Name:        ProjectOwner,
 		Description: "项目的所有者，可以进行项目的所有操作",
+	},
+	{
+		Name:        ProjectMaintainer,
+		Description: "项目的主要维护者，可以进行项目内的凭证配置、pipeline配置等操作",
 	},
 	{
 		Name:        ProjectDeveloper,
