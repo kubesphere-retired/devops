@@ -1,6 +1,6 @@
 TAG=$(tag)
 
-.PHONY: test build clean check
+.PHONY: test build clean check build-flyway
 check:
 	hack/verify.sh
 fmt:
@@ -16,3 +16,21 @@ image:
 clean:
 	rm -rf cmd/server
 
+
+build-image-%: ## build docker image
+	@if [ "$*" = "latest" ];then \
+	docker build -t kubesphere/devops:latest .; \
+	docker build -t kubesphere/devops:flyway -f ./pkg/db/Dockerfile ./pkg/db/;\
+	elif [ "`echo "$*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+"`" != "" ];then \
+	docker build -t kubesphere/devops:$* .; \
+	docker build -t kubesphere/devops:flyway-$* -f ./pkg/db/Dockerfile ./pkg/db/; \
+	fi
+
+push-image-%: ## push docker image
+	@if [ "$*" = "latest" ];then \
+	docker push kubesphere/devops:latest; \
+	docker push kubesphere/devops:flyway; \
+	elif [ "`echo "$*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+"`" != "" ];then \
+	docker push kubesphere/devops:$*; \
+	docker push kubesphere/devops:flyway-$*; \
+	fi
