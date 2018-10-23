@@ -85,6 +85,17 @@ type GithubSource struct {
 	DiscoverPRFromForks  *GithubDiscoverPRFromForks `json:"discover_pr_from_forks" mapstructure:"discover_pr_from_forks"`
 }
 
+type SvnSource struct {
+	Remote            string `json:"remote"`
+	CredentialId      string `json:"credential_id"`
+	Includes          string `json:"includes"`
+	Excludes          string `json:"excludes"`
+}
+type SingleSvnSource struct {
+	Remote        string `json:"remote"`
+	CredentialId  string `json:"credential_id"`
+}
+
 type ScmInfo struct {
 	Type   string `json:"type"`
 	Repo   string `json:"repo"`
@@ -637,6 +648,49 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 			}
 			forkTrait.CreateElement("trust").CreateAttr("class", trustClass)
 		}
+	case "svn":
+		svnDefine := &SvnSource{}
+		err := mapstructure.Decode(pipeline.Source.Define, svnDefine)
+		if err != nil {
+			return "", err
+		}
+		svnSource := branchSource.CreateElement("source")
+		svnSource.CreateAttr("class", "jenkins.scm.impl.subversion.SubversionSCMSource")
+		svnSource.CreateAttr("plugin", "subversion")
+		svnSource.CreateElement("id").SetText(idutils.GetUuid("svn-"))
+		svnSource.CreateElement("credentialsId").SetText(svnDefine.CredentialId)
+		svnSource.CreateElement("remoteBase").SetText(svnDefine.Remote)
+		svnSource.CreateElement("includes").SetText(svnDefine.Includes)
+		svnSource.CreateElement("excludes").SetText(svnDefine.Excludes)
+
+	case "single_svn":
+		singleSvnDefine := &SingleSvnSource{}
+		err := mapstructure.Decode(pipeline.Source.Define, singleSvnDefine)
+		if err != nil {
+			return "", err
+		}
+		svnSource := branchSource.CreateElement("source")
+		svnSource.CreateAttr("class", "jenkins.scm.impl.subversion.SubversionSCMSource")
+		svnSource.CreateAttr("plugin", "subversion")
+
+		svnSource.CreateElement("id").SetText(idutils.GetUuid("single-svn-"))
+		svnSource.CreateElement("name").SetText("master")
+		location := svnSource.CreateElement("locations").CreateElement("hudson.scm.SubversionSCM_-ModuleLocation")
+		location.CreateElement("remote").SetText(singleSvnDefine.Remote)
+		location.CreateElement("credentialsId").SetText(singleSvnDefine.CredentialId)
+		location.CreateElement("local").SetText(".")
+		location.CreateElement("depthOption").SetText("infinity")
+		location.CreateElement("ignoreExternalsOption").SetText("true")
+		location.CreateElement("cancelProcessOnExternalsFail").SetText("true")
+
+		svnSource.CreateElement("excludedRegions")
+		svnSource.CreateElement("includedRegions")
+		svnSource.CreateElement("excludedUsers")
+		svnSource.CreateElement("excludedRevprop")
+		svnSource.CreateElement("excludedCommitMessages")
+
+
+
 	default:
 		return "", fmt.Errorf("unsupport source type")
 	}
