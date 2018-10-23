@@ -5,9 +5,33 @@ go_import_path: kubesphere.io/devops
 go:
   - "1.10.3"
 
+before_install:
+- curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+- curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+- sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+- sudo apt-get update
+- sudo apt-get -y install docker-ce
+- dep ensure -v
+
+before_script:
+- docker --version
+
 install:
   - chmod +x hack/*.sh
   - go get golang.org/x/tools/cmd/goimports
 
 scripts:
   - make check
+
+deploy:
+- provider: script
+  script: bash hack/docker_push.sh latest
+  on:
+    branch: master
+    repo: kubesphere/devops
+
+- provider: script
+  script: bash docker_push $TRAVIS_TAG
+  on:
+    tags: true
+    repo: openpitrix/openpitrix
