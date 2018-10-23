@@ -6,6 +6,7 @@ CREATE TABLE project (
   `create_time` TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `status`      VARCHAR(50)        NOT NULL,
   `visibility`  VARCHAR(50)        NOT NULL,
+  `extra`       TEXT               NOT NULL,
   PRIMARY KEY (`project_id`)
 );
 

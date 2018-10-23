@@ -33,10 +33,12 @@ import (
 type CreateProjectRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Extra       string `json:"extra"`
 }
 
 type UpdateProjectRequest struct {
 	Description string `json:"description"`
+	Extra       string `json:"extra"`
 }
 
 type AddProjectMemberRequest struct {
@@ -136,7 +138,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	project := models.NewProject(request.Name, request.Description, creator)
+	project := models.NewProject(request.Name, request.Description, creator, request.Extra)
 	_, err = s.Ds.Jenkins.CreateFolder(project.ProjectId, project.Description)
 	if err != nil {
 		logger.Error("%v", err)
@@ -291,9 +293,15 @@ func (s *ProjectService) UpdateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
+	query := s.Ds.Db.Update(models.ProjectTableName)
 	if !govalidator.IsNull(request.Description) {
-		_, err := s.Ds.Db.Update(models.ProjectTableName).
-			Set(models.ProjectDescriptionColumn, request.Description).
+		query.Set(models.ProjectDescriptionColumn, request.Description)
+	}
+	if !govalidator.IsNull(request.Extra) {
+		query.Set(models.ProjectExtraColumn, request.Extra)
+	}
+	if !govalidator.IsNull(request.Description) || !govalidator.IsNull(request.Extra) {
+		query.
 			Where(db.Eq(models.ProjectIdColumn, projectId)).Exec()
 		if err != nil {
 			logger.Error("%v", err)
