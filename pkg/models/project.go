@@ -27,6 +27,7 @@ const (
 	ProjectPrefix            = "project-"
 	ProjectDescriptionColumn = "description"
 	ProjectIdColumn          = "project_id"
+	ProjectExtraColumn       = "extra"
 )
 
 type Project struct {
@@ -37,9 +38,10 @@ type Project struct {
 	CreateTime  time.Time `json:"create_time"`
 	Status      string    `json:"status"`
 	Visibility  string    `json:"visibility"`
+	Extra       string    `json:"extra"`
 }
 
-func NewProject(name, description, creator string) *Project {
+func NewProject(name, description, creator, extra string) *Project {
 	return &Project{
 		ProjectId:   idutils.GetUuid(ProjectPrefix),
 		Name:        name,
@@ -48,5 +50,6 @@ func NewProject(name, description, creator string) *Project {
 		CreateTime:  time.Now(),
 		Status:      constants.StatusActive,
 		Visibility:  constants.VisibilityPrivate,
+		Extra:       extra,
 	}
 }
