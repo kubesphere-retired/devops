@@ -675,6 +675,7 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 
 		svnSource.CreateElement("id").SetText(idutils.GetUuid("single-svn-"))
 		svnSource.CreateElement("name").SetText("master")
+
 		location := svnSource.CreateElement("locations").CreateElement("hudson.scm.SubversionSCM_-ModuleLocation")
 		location.CreateElement("remote").SetText(singleSvnDefine.Remote)
 		location.CreateElement("credentialsId").SetText(singleSvnDefine.CredentialId)
@@ -688,6 +689,10 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 		svnSource.CreateElement("excludedUsers")
 		svnSource.CreateElement("excludedRevprop")
 		svnSource.CreateElement("excludedCommitMessages")
+		svnSource.CreateElement("workspaceUpdater").CreateAttr("class","hudson.scm.subversion.UpdateUpdater" )
+		svnSource.CreateElement("ignoreDirPropChanges").SetText("false")
+		svnSource.CreateElement("filterChangelog").SetText("false")
+		svnSource.CreateElement("quietOperation").SetText("true")
 
 
 
