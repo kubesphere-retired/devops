@@ -31,4 +31,4 @@ deploy:
   script: bash docker_push $TRAVIS_TAG
   on:
     tags: true
-    repo: openpitrix/openpitrix
+    repo: kubesphere/devops
