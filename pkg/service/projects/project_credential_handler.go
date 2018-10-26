@@ -16,6 +16,7 @@ package projects
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/mitchellh/mapstructure"
@@ -123,7 +124,7 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			rest.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
-		if err != nil {
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
 			logger.Error("%v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -157,7 +158,7 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			rest.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
-		if err != nil {
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
 			logger.Error("%v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -191,7 +192,7 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			rest.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
-		if err != nil {
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
 			logger.Error("%v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
