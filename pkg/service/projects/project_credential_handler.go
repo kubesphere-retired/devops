@@ -115,6 +115,20 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		credential, err := s.Ds.Jenkins.GetCredentialInFolder(request.Domain, UPRequest.Id, projectId)
+		if credential != nil {
+			err := fmt.Errorf("credential id [%s] has been used", credential.Id)
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil {
+			logger.Error("%v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		credentialId, err := s.Ds.Jenkins.CreateUsernamePasswordCredentialInFolder(request.Domain, UPRequest.Id,
 			UPRequest.Username, UPRequest.Password, UPRequest.Description, projectId)
 		if err != nil {
@@ -135,6 +149,20 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		credential, err := s.Ds.Jenkins.GetCredentialInFolder(request.Domain, SshRequest.Id, projectId)
+		if credential != nil {
+			err := fmt.Errorf("credential id [%s] has been used", credential.Id)
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil {
+			logger.Error("%v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		credentialId, err := s.Ds.Jenkins.CreateSshCredentialInFolder(request.Domain, SshRequest.Id,
 			SshRequest.Username, SshRequest.Passphrase, SshRequest.PrivateKey, SshRequest.Description, projectId)
 		if err != nil {
@@ -155,6 +183,20 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		credential, err := s.Ds.Jenkins.GetCredentialInFolder(request.Domain, TextRequest.Id, projectId)
+		if credential != nil {
+			err := fmt.Errorf("credential id [%s] has been used", credential.Id)
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil {
+			logger.Error("%v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		credentialId, err := s.Ds.Jenkins.CreateSecretTextCredentialInFolder(request.Domain, TextRequest.Id,
 			TextRequest.Secret, TextRequest.Description, projectId)
 		if err != nil {
