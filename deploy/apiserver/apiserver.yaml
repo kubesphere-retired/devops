@@ -36,5 +36,9 @@ spec:
           value: "openpitrix-db.openpitrix-system.svc"
         - name: DEVOPSPHERE_MYSQL_PORT
           value: "3306"
+        - name: DEVOPSPHERE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         ports:
         - containerPort: 8080

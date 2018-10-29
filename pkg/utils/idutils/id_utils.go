@@ -14,6 +14,10 @@ limitations under the License.
 package idutils
 
 import (
+	"errors"
+	"net"
+	"os"
+
 	"github.com/golang/example/stringutil"
 	"github.com/sony/sonyflake"
 	hashids "github.com/speps/go-hashids"
@@ -25,7 +29,11 @@ var sf *sonyflake.Sonyflake
 
 func init() {
 	var st sonyflake.Settings
+	st.MachineID = machineID
 	sf = sonyflake.NewSonyflake(st)
+	if sf == nil {
+		panic("failed to initialize sonyflake")
+	}
 }
 
 func GetIntId() uint64 {
@@ -69,4 +77,16 @@ func GetUuid36(prefix string) string {
 	}
 
 	return prefix + stringutil.Reverse(i)
+}
+
+func machineID() (uint16, error) {
+	ipStr := os.Getenv("DEVOPSPHERE_IP")
+	if len(ipStr) == 0 {
+		return 0, errors.New("'DEVOPSPHERE_IP' environment variable not set")
+	}
+	ip := net.ParseIP(ipStr)
+	if len(ip) < 4 {
+		return 0, errors.New("invalid IP")
+	}
+	return uint16(ip[2])<<8 + uint16(ip[3]), nil
 }
