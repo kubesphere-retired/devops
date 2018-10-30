@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: devops-db-init-job
-  namespace: kubesphere-system
+  namespace: kubesphere-devops-system
   labels:
     app: devops-apiserver
     job: devops-db-init

@@ -4,7 +4,7 @@ metadata:
   name: devops-apiserver
   annotations:
     desc: ''
-  namespace: kubesphere-system
+  namespace: kubesphere-devops-system
   labels:
     app: devops-apiserver
 spec:

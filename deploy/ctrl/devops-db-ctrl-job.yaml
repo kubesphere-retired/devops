@@ -2,11 +2,11 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: devops-db-ctrl-job
-  namespace: kubesphere-system
+  namespace: kubesphere-devops-system
   labels:
     app: devops
     job: devops-db-ctrl
-    version: kubesphere-system
+    version: latest
 spec:
   backoffLimit: 6
   completions: 1
