@@ -1,11 +1,11 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: devops-db-init-job
+  name: ks-devops-db-init-job
   namespace: kubesphere-devops-system
   labels:
-    app: devops-apiserver
-    job: devops-db-init
+    app: ks-devops-apiserver
+    job: ks-devops-db-init
     version: latest
 spec:
   backoffLimit: 6
@@ -15,9 +15,9 @@ spec:
     metadata:
       labels:
         app: devops
-        job: devops-db-init
+        job: ks-devops-db-init
         version: latest
-      name: devops-db-init
+      name: ks-devops-db-init
     spec:
       initContainers:
       - name: wait-mysql

@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: devops-apiserver
+  name: ks-devops-apiserver
   namespace: kubesphere-devops-system
   labels:
-    app: devops-apiserver
+    app: ks-devops-apiserver
 spec:
   selector:
     matchLabels:
-      app: devops-apiserver
+      app: ks-devops-apiserver
   replicas: 1
   template:
     metadata:
       labels:
-        app: devops-apiserver
+        app: ks-devops-apiserver
     spec:
       containers:
       - image: kubesphere/devops:latest
