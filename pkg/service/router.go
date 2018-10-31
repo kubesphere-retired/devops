@@ -44,7 +44,7 @@ func Router(s *Server) (app rest.App) {
 		rest.Get("/projects/:id/pipelines/:pid/scm", s.Projects.GetPipelineScmHandler),
 		rest.Get("/projects/default_roles/", s.Projects.GetProjectDefaultRolesHandler))
 	if err != nil {
-		logger.Critical("%v", err)
+		logger.Critical("%+v", err)
 		return
 	}
 	return
