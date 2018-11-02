@@ -322,6 +322,24 @@ func (s *ProjectService) DeleteMemberHandler(w rest.ResponseWriter, r *rest.Requ
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	if oldMembership.Role == ProjectOwner {
+		count, err := s.Ds.Db.Select(models.ProjectIdColumn).
+			From(models.ProjectMembershipTableName).
+			Where(db.And(
+				db.Eq(models.ProjectIdColumn, projectId),
+				db.Eq(models.ProjectMembershipRoleColumn, ProjectOwner))).Count()
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if count == 1 {
+			err = fmt.Errorf("project must has at least one admin")
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
 
 	oldProjectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(projectId, oldMembership.Role))
 	if err != nil {
