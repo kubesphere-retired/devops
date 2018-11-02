@@ -62,7 +62,7 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 			return
 		}
 
-		job, err := s.Ds.Jenkins.GetJob(pipeline.Name,projectId)
+		job, err := s.Ds.Jenkins.GetJob(pipeline.Name, projectId)
 		if job != nil {
 			err := fmt.Errorf("job name [%s] has been used", job.GetName())
 			logger.Warn(err.Error())
@@ -100,7 +100,7 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 			return
 		}
 
-		job, err := s.Ds.Jenkins.GetJob(pipeline.Name,projectId)
+		job, err := s.Ds.Jenkins.GetJob(pipeline.Name, projectId)
 		if job != nil {
 			err := fmt.Errorf("job name [%s] has been used", job.GetName())
 			logger.Warn(err.Error())
