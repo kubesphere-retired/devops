@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/mitchellh/mapstructure"
@@ -60,6 +61,20 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		job, err := s.Ds.Jenkins.GetJob(pipeline.Name,projectId)
+		if job != nil {
+			err := fmt.Errorf("job name [%s] has been used", job.GetName())
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+
 		_, err = s.Ds.Jenkins.CreateJobInFolder(config, pipeline.Name, projectId)
 		if err != nil {
 			logger.Error("%+v", err)
@@ -84,6 +99,20 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		job, err := s.Ds.Jenkins.GetJob(pipeline.Name,projectId)
+		if job != nil {
+			err := fmt.Errorf("job name [%s] has been used", job.GetName())
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+
 		_, err = s.Ds.Jenkins.CreateJobInFolder(config, pipeline.Name, projectId)
 		if err != nil {
 			logger.Error("%+v", err)
