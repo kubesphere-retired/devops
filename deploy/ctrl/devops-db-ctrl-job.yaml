@@ -4,7 +4,7 @@ metadata:
   name: ks-devops-db-ctrl-job
   namespace: kubesphere-devops-system
   labels:
-    app: ks-devops
+    app: ks-devops-apiserver
     job: ks-devops-db-ctrl
     version: latest
 spec:
@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
       labels:
-        app: ks-devops
+        app: ks-devops-apiserver
         job: ks-devops-db-ctrl
         version: latest
       name: ks-devops-db-ctrl
