@@ -16,11 +16,17 @@ package projects
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/asaskevich/govalidator"
+	"github.com/gocraft/dbr"
 	"github.com/mitchellh/mapstructure"
 
+	"kubesphere.io/devops/pkg/db"
 	"kubesphere.io/devops/pkg/logger"
+	"kubesphere.io/devops/pkg/models"
 	"kubesphere.io/devops/pkg/utils/stringutils"
 	"kubesphere.io/devops/pkg/utils/userutils"
 )
@@ -69,6 +75,7 @@ type CopySshCredentialRequest struct {
 type CredentialResponse struct {
 	Id          string `json:"id"`
 	Type        string `json:"type"`
+	DisplayName string `json:"display_name"`
 	Fingerprint *struct {
 		FileName string `json:"file_name,omitempty"`
 		Hash     string `json:"hash,omitempty"`
@@ -82,8 +89,10 @@ type CredentialResponse struct {
 			} `json:"ranges"`
 		} `json:"usage,omitempty"`
 	} `json:"fingerprint,omitempty"`
-	Description string `json:"description"`
-	Domain      string `json:"domain"`
+	Description string     `json:"description"`
+	Domain      string     `json:"domain"`
+	CreateTime  *time.Time `json:"create_time,omitempty"`
+	Creator     string     `json:"creator,omitempty"`
 }
 
 func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.Request) {
@@ -93,14 +102,14 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 
 	err := r.DecodeJsonPayload(request)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
@@ -110,17 +119,41 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 		UPRequest := &UsernamePasswordCredentialRequest{}
 		err := mapstructure.Decode(request.Content, UPRequest)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		credential, err := s.Ds.Jenkins.GetCredentialInFolder(request.Domain, UPRequest.Id, projectId)
+		if credential != nil {
+			err := fmt.Errorf("credential id [%s] has been used", credential.Id)
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		credentialId, err := s.Ds.Jenkins.CreateUsernamePasswordCredentialInFolder(request.Domain, UPRequest.Id,
 			UPRequest.Username, UPRequest.Password, UPRequest.Description, projectId)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
+
+		projectCredential := models.NewProjectCredential(projectId, UPRequest.Id, request.Domain, operator)
+		_, err = s.Ds.Db.InsertInto(models.ProjectCredentialTableName).Columns(models.ProjectCredentialColumns...).
+			Record(projectCredential).Exec()
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+
 		w.WriteJson(struct {
 			Id string `json:"id"`
 		}{Id: *credentialId})
@@ -130,17 +163,42 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 		SshRequest := &SshCredentialRequest{}
 		err := mapstructure.Decode(request.Content, SshRequest)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		credential, err := s.Ds.Jenkins.GetCredentialInFolder(request.Domain, SshRequest.Id, projectId)
+		if credential != nil {
+			err := fmt.Errorf("credential id [%s] has been used", credential.Id)
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		credentialId, err := s.Ds.Jenkins.CreateSshCredentialInFolder(request.Domain, SshRequest.Id,
 			SshRequest.Username, SshRequest.Passphrase, SshRequest.PrivateKey, SshRequest.Description, projectId)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
+
+		projectCredential := models.NewProjectCredential(projectId, SshRequest.Id, request.Domain, operator)
+		_, err = s.Ds.Db.InsertInto(models.ProjectCredentialTableName).
+			Columns(models.ProjectCredentialColumns...).
+			Record(projectCredential).Exec()
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+
 		w.WriteJson(struct {
 			Id string `json:"id"`
 		}{Id: *credentialId})
@@ -150,24 +208,49 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 		TextRequest := &SecretTextCredentialRequest{}
 		err := mapstructure.Decode(request.Content, TextRequest)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		credential, err := s.Ds.Jenkins.GetCredentialInFolder(request.Domain, TextRequest.Id, projectId)
+		if credential != nil {
+			err := fmt.Errorf("credential id [%s] has been used", credential.Id)
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		credentialId, err := s.Ds.Jenkins.CreateSecretTextCredentialInFolder(request.Domain, TextRequest.Id,
 			TextRequest.Secret, TextRequest.Description, projectId)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
+
+		projectCredential := models.NewProjectCredential(projectId, TextRequest.Id, request.Domain, operator)
+		_, err = s.Ds.Db.
+			InsertInto(models.ProjectCredentialTableName).
+			Columns(models.ProjectCredentialColumns...).Record(projectCredential).Exec()
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+
 		w.WriteJson(struct {
 			Id string `json:"id"`
 		}{Id: *credentialId})
 		return
 	default:
 		err := fmt.Errorf("error unsupport  credential type")
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
@@ -180,19 +263,35 @@ func (s *ProjectService) DeleteCredentialHandler(w rest.ResponseWriter, r *rest.
 	operator := userutils.GetUserNameFromRequest(r)
 	err := r.DecodeJsonPayload(request)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	id, err := s.Ds.Jenkins.DeleteCredentialInFolder(request.Domain, credentialId, projectId)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+		return
+	}
+
+	deleteConditions := append(make([]dbr.Builder, 0), db.Eq(models.ProjectIdColumn, projectId))
+	deleteConditions = append(deleteConditions, db.Eq(models.ProjectCredentialIdColumn, credentialId))
+	if !govalidator.IsNull(request.Domain) {
+		deleteConditions = append(deleteConditions, db.Eq(models.ProjectCredentialDomainColumn, request.Domain))
+	} else {
+		deleteConditions = append(deleteConditions, db.Eq(models.ProjectCredentialDomainColumn, "_"))
+	}
+
+	_, err = s.Ds.Db.DeleteFrom(models.ProjectCredentialTableName).
+		Where(db.And(deleteConditions...)).Exec()
+	if err != nil && err != db.ErrNotFound {
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
@@ -209,20 +308,20 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 	credentialId := r.PathParams["cid"]
 	err := r.DecodeJsonPayload(request)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	jenkinsCredential, err := s.Ds.Jenkins.GetCredentialInFolder(request.Domain, credentialId, projectId)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
@@ -233,14 +332,14 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 		UPRequest.Id = credentialId
 		err := mapstructure.Decode(request.Content, UPRequest)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		credentialId, err := s.Ds.Jenkins.UpdateUsernamePasswordCredentialInFolder(request.Domain, UPRequest.Id,
 			UPRequest.Username, UPRequest.Password, UPRequest.Description, projectId)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
@@ -254,14 +353,14 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 		SshRequest.Id = credentialId
 		err := mapstructure.Decode(request.Content, SshRequest)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		credentialId, err := s.Ds.Jenkins.UpdateSshCredentialInFolder(request.Domain, SshRequest.Id,
 			SshRequest.Username, SshRequest.Passphrase, SshRequest.PrivateKey, SshRequest.Description, projectId)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -275,14 +374,14 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 		TextRequest.Id = credentialId
 		err := mapstructure.Decode(request.Content, TextRequest)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		credentialId, err := s.Ds.Jenkins.UpdateSecretTextCredentialInFolder(request.Domain, TextRequest.Id,
 			TextRequest.Secret, TextRequest.Description, projectId)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
@@ -292,7 +391,7 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 		return
 	default:
 		err := fmt.Errorf("error unsupport credential type %s", credentialType)
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -305,17 +404,31 @@ func (s *ProjectService) GetCredentialHandler(w rest.ResponseWriter, r *rest.Req
 	domain := r.URL.Query().Get("domain")
 	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
+
 	credentialResponse, err := s.Ds.Jenkins.GetCredentialInFolder(domain, credentialId, projectId)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
-	response := formatCredentialResponse(credentialResponse)
+
+	projectCredential := &models.ProjectCredential{}
+	err = s.Ds.Db.Select(models.ProjectCredentialColumns...).
+		From(models.ProjectCredentialTableName).Where(
+		db.And(db.Eq(models.ProjectIdColumn, projectId),
+			db.Eq(models.ProjectCredentialIdColumn, credentialResponse.Id),
+			db.Eq(models.ProjectCredentialDomainColumn, credentialResponse.Domain))).LoadOne(projectCredential)
+	if err != nil && err != db.ErrNotFound {
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+		return
+	}
+
+	response := formatCredentialResponse(credentialResponse, projectCredential)
 	w.WriteJson(response)
 	return
 }
@@ -326,17 +439,30 @@ func (s *ProjectService) GetCredentialsHandler(w rest.ResponseWriter, r *rest.Re
 	domain := r.URL.Query().Get("domain")
 	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
-	jenkinsCredentialResponse, err := s.Ds.Jenkins.GetCredentialsInFolder(domain, projectId)
+	jenkinsCredentialResponses, err := s.Ds.Jenkins.GetCredentialsInFolder(domain, projectId)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
-	response := formatCredentialsResponse(jenkinsCredentialResponse)
+	selectCondition := db.Eq(models.ProjectIdColumn, projectId)
+	if !govalidator.IsNull(domain) {
+		selectCondition = db.And(selectCondition, db.Eq(models.ProjectCredentialDomainColumn, domain))
+	}
+	projectCredentials := make([]*models.ProjectCredential, 0)
+	_, err = s.Ds.Db.Select(models.ProjectCredentialColumns...).
+		From(models.ProjectCredentialTableName).Where(selectCondition).Load(&projectCredentials)
+
+	if err != nil {
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+		return
+	}
+	response := formatCredentialsResponse(jenkinsCredentialResponses, projectCredentials)
 	w.WriteJson(response)
 	return
 }

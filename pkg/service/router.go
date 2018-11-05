@@ -41,9 +41,10 @@ func Router(s *Server) (app rest.App) {
 		rest.Post("/projects/:id/pipelines", s.Projects.CreatePipelineHandler),
 		rest.Put("/projects/:id/pipelines/:pid", s.Projects.UpdatePipelineHandler),
 		rest.Delete("/projects/:id/pipelines/:pid", s.Projects.DeletePipelineHandler),
-		rest.Get("/projects/:id/pipelines/:pid/scm", s.Projects.GetPipelineScmHandler))
+		rest.Get("/projects/:id/pipelines/:pid/scm", s.Projects.GetPipelineScmHandler),
+		rest.Get("/projects/default_roles/", s.Projects.GetProjectDefaultRolesHandler))
 	if err != nil {
-		logger.Critical("%v", err)
+		logger.Critical("%+v", err)
 		return
 	}
 	return

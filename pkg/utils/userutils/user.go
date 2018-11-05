@@ -16,5 +16,5 @@ package userutils
 import "github.com/ant0ine/go-json-rest/rest"
 
 func GetUserNameFromRequest(request *rest.Request) string {
-	return request.Env["REMOTE_USER"].(string)
+	return request.Header.Get("X-Token-Username")
 }

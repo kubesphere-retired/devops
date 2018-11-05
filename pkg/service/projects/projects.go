@@ -16,8 +16,8 @@ package projects
 import (
 	"fmt"
 
+	"kubesphere.io/devops/pkg/constants"
 	"kubesphere.io/devops/pkg/db"
-
 	"kubesphere.io/devops/pkg/ds"
 	"kubesphere.io/devops/pkg/gojenkins"
 	"kubesphere.io/devops/pkg/models"
@@ -241,6 +241,9 @@ func GetPipelineRolePattern(projectId string) string {
 }
 
 func (s *ProjectService) checkProjectUserInRole(username, projectId string, roles []string) error {
+	if username == constants.KS_ADMIN {
+		return nil
+	}
 	membership := &models.ProjectMembership{}
 	err := s.Ds.Db.Select(models.ProjectMembershipColumns...).
 		From(models.ProjectMembershipTableName).

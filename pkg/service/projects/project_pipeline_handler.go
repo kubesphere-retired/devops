@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/mitchellh/mapstructure"
@@ -33,14 +34,14 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 
 	err := r.DecodeJsonPayload(request)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
@@ -50,19 +51,33 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		pipeline := &Pipeline{}
 		err := mapstructure.Decode(request.Define, pipeline)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		config, err := createPipelineConfigXml(pipeline)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		job, err := s.Ds.Jenkins.GetJob(pipeline.Name, projectId)
+		if job != nil {
+			err := fmt.Errorf("job name [%s] has been used", job.GetName())
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+
 		_, err = s.Ds.Jenkins.CreateJobInFolder(config, pipeline.Name, projectId)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
@@ -74,19 +89,33 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		pipeline := &MultiBranchPipeline{}
 		err := mapstructure.Decode(request.Define, pipeline)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		config, err := createMultiBranchPipelineConfigXml(pipeline)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		job, err := s.Ds.Jenkins.GetJob(pipeline.Name, projectId)
+		if job != nil {
+			err := fmt.Errorf("job name [%s] has been used", job.GetName())
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+
 		_, err = s.Ds.Jenkins.CreateJobInFolder(config, pipeline.Name, projectId)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
@@ -97,7 +126,7 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 
 	default:
 		err := fmt.Errorf("error unsupport job type")
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -109,13 +138,13 @@ func (s *ProjectService) DeletePipelineHandler(w rest.ResponseWriter, r *rest.Re
 	pipelineId := r.PathParams["pid"]
 	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	_, err = s.Ds.Jenkins.DeleteJob(pipelineId, projectId)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
@@ -132,14 +161,14 @@ func (s *ProjectService) UpdatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 
 	err := r.DecodeJsonPayload(request)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
@@ -149,25 +178,25 @@ func (s *ProjectService) UpdatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		pipeline := &Pipeline{}
 		err := mapstructure.Decode(request.Define, pipeline)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		config, err := createPipelineConfigXml(pipeline)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		job, err := s.Ds.Jenkins.GetJob(pipelineId, projectId)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		err = job.UpdateConfig(config)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
@@ -179,25 +208,25 @@ func (s *ProjectService) UpdatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		multiBranchPipeline := &MultiBranchPipeline{}
 		err := mapstructure.Decode(request.Define, multiBranchPipeline)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		config, err := createMultiBranchPipelineConfigXml(multiBranchPipeline)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		job, err := s.Ds.Jenkins.GetJob(pipelineId, projectId)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		err = job.UpdateConfig(config)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
@@ -207,7 +236,7 @@ func (s *ProjectService) UpdatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		return
 	default:
 		err := fmt.Errorf("error unsupport job type")
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 
@@ -220,13 +249,13 @@ func (s *ProjectService) GetPipelineHandler(w rest.ResponseWriter, r *rest.Reque
 	operator := userutils.GetUserNameFromRequest(r)
 	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	job, err := s.Ds.Jenkins.GetJob(pipelineId, projectId)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
@@ -234,13 +263,13 @@ func (s *ProjectService) GetPipelineHandler(w rest.ResponseWriter, r *rest.Reque
 	case "org.jenkinsci.plugins.workflow.job.WorkflowJob":
 		config, err := job.GetConfig()
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		pipeline, err := parsePipelineConfigXml(config)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -250,13 +279,13 @@ func (s *ProjectService) GetPipelineHandler(w rest.ResponseWriter, r *rest.Reque
 		}
 		jsonByte, err := json.Marshal(pipeline)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		err = json.Unmarshal(jsonByte, &jobRequest.Define)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -266,13 +295,13 @@ func (s *ProjectService) GetPipelineHandler(w rest.ResponseWriter, r *rest.Reque
 	case "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject":
 		config, err := job.GetConfig()
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		pipeline, err := parseMultiBranchPipelineConfigXml(config)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -282,13 +311,13 @@ func (s *ProjectService) GetPipelineHandler(w rest.ResponseWriter, r *rest.Reque
 		}
 		jsonByte, err := json.Marshal(pipeline)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		err = json.Unmarshal(jsonByte, &jobRequest.Define)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -297,7 +326,7 @@ func (s *ProjectService) GetPipelineHandler(w rest.ResponseWriter, r *rest.Reque
 
 	default:
 		err := fmt.Errorf("error unsupport job type")
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -309,13 +338,13 @@ func (s *ProjectService) GetPipelineScmHandler(w rest.ResponseWriter, r *rest.Re
 	operator := userutils.GetUserNameFromRequest(r)
 	err := s.checkProjectUserInRole(operator, projectId, AllRoleSlice)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	job, err := s.Ds.Jenkins.GetJob(pipelineId, projectId)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
@@ -323,13 +352,13 @@ func (s *ProjectService) GetPipelineScmHandler(w rest.ResponseWriter, r *rest.Re
 	case "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject":
 		config, err := job.GetConfig()
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
 		scm, err := parseMultiBranchPipelineScm(config)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -338,7 +367,7 @@ func (s *ProjectService) GetPipelineScmHandler(w rest.ResponseWriter, r *rest.Re
 
 	default:
 		err := fmt.Errorf("error unsupport job type")
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
