@@ -194,7 +194,7 @@ func (s *ProjectService) UpdateMemberHandler(w rest.ResponseWriter, r *rest.Requ
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if username == operator{
+	if username == operator {
 		err := fmt.Errorf("you can not change your role")
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
