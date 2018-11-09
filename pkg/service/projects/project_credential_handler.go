@@ -35,6 +35,7 @@ const (
 	CredentialTypeUsernamePassword = "username_password"
 	CredentialTypeSsh              = "ssh"
 	CredentialTypeSecretText       = "secret_text"
+	CredentialTypeKubeConfig       = "kubeconfig"
 )
 
 type CredentialRequest struct {
@@ -61,6 +62,12 @@ type SshCredentialRequest struct {
 type SecretTextCredentialRequest struct {
 	Id          string `json:"id"`
 	Secret      string `json:"secret"`
+	Description string `json:"description"`
+}
+
+type KubeconfigCredentialRequest struct {
+	Id          string `json:"id"`
+	Content     string `json:"content"`
 	Description string `json:"description"`
 }
 
@@ -248,6 +255,50 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			Id string `json:"id"`
 		}{Id: *credentialId})
 		return
+	case CredentialTypeKubeConfig:
+		KubeconfigRequest := &KubeconfigCredentialRequest{}
+		err := mapstructure.Decode(request.Content, KubeconfigRequest)
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		credential, err := s.Ds.Jenkins.GetCredentialInFolder(request.Domain, KubeconfigRequest.Id, projectId)
+		if credential != nil {
+			err := fmt.Errorf("credential id [%s] has been used", credential.Id)
+			logger.Warn(err.Error())
+			rest.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		credentialId, err := s.Ds.Jenkins.CreateKubeconfigCredentialInFolder(request.Domain, KubeconfigRequest.Id,
+			KubeconfigRequest.Content, KubeconfigRequest.Description, projectId)
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+
+		projectCredential := models.NewProjectCredential(projectId, KubeconfigRequest.Id, request.Domain, operator)
+		_, err = s.Ds.Db.
+			InsertInto(models.ProjectCredentialTableName).
+			Columns(models.ProjectCredentialColumns...).Record(projectCredential).Exec()
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+
+		w.WriteJson(struct {
+			Id string `json:"id"`
+		}{Id: *credentialId})
+		return
 	default:
 		err := fmt.Errorf("error unsupport  credential type")
 		logger.Error("%+v", err)
@@ -389,6 +440,27 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 			Id string `json:"id"`
 		}{Id: *credentialId})
 		return
+	case CredentialTypeKubeConfig:
+		KubeconfigRequest := &KubeconfigCredentialRequest{}
+		KubeconfigRequest.Id = credentialId
+		err := mapstructure.Decode(request.Content, KubeconfigRequest)
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		credentialId, err := s.Ds.Jenkins.UpdateKubeconfigCredentialInFolder(request.Domain, KubeconfigRequest.Id,
+			KubeconfigRequest.Content, KubeconfigRequest.Description, projectId)
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+		w.WriteJson(struct {
+			Id string `json:"id"`
+		}{Id: *credentialId})
+		return
+
 	default:
 		err := fmt.Errorf("error unsupport credential type %s", credentialType)
 		logger.Error("%+v", err)
