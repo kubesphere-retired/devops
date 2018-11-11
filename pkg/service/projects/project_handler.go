@@ -14,6 +14,7 @@ limitations under the License.
 package projects
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -138,13 +139,34 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	project := models.NewProject(request.Name, request.Description, creator, request.Extra)
+	if err := checkJenkinsGoodName(request.Name); err != nil {
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	job, err := s.Ds.Jenkins.GetJob(request.Name)
+	if job != nil {
+		err := fmt.Errorf("job name [%s] has been used", job.GetName())
+		logger.Warn(err.Error())
+		rest.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+	if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+		return
+	}
+
 	_, err = s.Ds.Jenkins.CreateFolder(project.ProjectId, project.Description)
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
+
 	for role, permission := range JenkinsProjectPermissionMap {
 		_, err := s.Ds.Jenkins.AddProjectRole(GetProjectRoleName(project.ProjectId, role),
 			GetProjectRolePattern(project.ProjectId), permission, true)

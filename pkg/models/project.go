@@ -17,14 +17,12 @@ import (
 	"time"
 
 	"kubesphere.io/devops/pkg/constants"
-	"kubesphere.io/devops/pkg/utils/idutils"
 )
 
 var ProjectColumns = GetColumnsFromStruct(&Project{})
 
 const (
 	ProjectTableName         = "project"
-	ProjectPrefix            = "project-"
 	ProjectDescriptionColumn = "description"
 	ProjectIdColumn          = "project_id"
 	ProjectExtraColumn       = "extra"
@@ -43,7 +41,7 @@ type Project struct {
 
 func NewProject(name, description, creator, extra string) *Project {
 	return &Project{
-		ProjectId:   idutils.GetUuid(ProjectPrefix),
+		ProjectId:   name,
 		Name:        name,
 		Description: description,
 		Creator:     creator,

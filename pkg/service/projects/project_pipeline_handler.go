@@ -55,6 +55,11 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		if err := checkJenkinsGoodName(pipeline.Name); err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		config, err := createPipelineConfigXml(pipeline)
 		if err != nil {
 			logger.Error("%+v", err)
@@ -89,6 +94,11 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		pipeline := &MultiBranchPipeline{}
 		err := mapstructure.Decode(request.Define, pipeline)
 		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := checkJenkinsGoodName(pipeline.Name); err != nil {
 			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
