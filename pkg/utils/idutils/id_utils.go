@@ -92,4 +92,3 @@ func machineID() (uint16, error) {
 	}
 	return uint16(ip[2])<<8 + uint16(ip[3]), nil
 }
-
