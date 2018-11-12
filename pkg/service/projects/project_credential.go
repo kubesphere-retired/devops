@@ -15,15 +15,19 @@ package projects
 
 import (
 	"kubesphere.io/devops/pkg/gojenkins"
+	"kubesphere.io/devops/pkg/models"
 )
 
 var CredentialTypeMap = map[string]string{
-	"SSH Username with private key": CredentialTypeSsh,
-	"Username with password":        CredentialTypeUsernamePassword,
-	"Secret text":                   CredentialTypeSecretText,
+	"SSH Username with private key":         CredentialTypeSsh,
+	"Username with password":                CredentialTypeUsernamePassword,
+	"Secret text":                           CredentialTypeSecretText,
+	"Kubernetes configuration (kubeconfig)": CredentialTypeKubeConfig,
 }
 
-func formatCredentialResponse(jenkinsCredentialResponse *gojenkins.CredentialResponse) *CredentialResponse {
+func formatCredentialResponse(
+	jenkinsCredentialResponse *gojenkins.CredentialResponse,
+	dbCredentialResponse *models.ProjectCredential) *CredentialResponse {
 	response := &CredentialResponse{}
 	response.Id = jenkinsCredentialResponse.Id
 	response.Description = jenkinsCredentialResponse.Description
@@ -49,6 +53,12 @@ func formatCredentialResponse(jenkinsCredentialResponse *gojenkins.CredentialRes
 		}
 	}
 	response.Domain = jenkinsCredentialResponse.Domain
+
+	if dbCredentialResponse != nil {
+		response.CreateTime = &dbCredentialResponse.CreateTime
+		response.Creator = dbCredentialResponse.Creator
+	}
+
 	credentialType, ok := CredentialTypeMap[jenkinsCredentialResponse.TypeName]
 	if ok {
 		response.Type = credentialType
@@ -58,10 +68,18 @@ func formatCredentialResponse(jenkinsCredentialResponse *gojenkins.CredentialRes
 	return response
 }
 
-func formatCredentialsResponse(jenkinsCredentialsResponse []*gojenkins.CredentialResponse) []*CredentialResponse {
+func formatCredentialsResponse(jenkinsCredentialsResponse []*gojenkins.CredentialResponse,
+	projectCredentials []*models.ProjectCredential) []*CredentialResponse {
 	responseSlice := make([]*CredentialResponse, 0)
 	for _, jenkinsCredential := range jenkinsCredentialsResponse {
-		responseSlice = append(responseSlice, formatCredentialResponse(jenkinsCredential))
+		var dbCredential *models.ProjectCredential = nil
+		for _, projectCredential := range projectCredentials {
+			if projectCredential.CredentialId == jenkinsCredential.Id &&
+				projectCredential.Domain == jenkinsCredential.Domain {
+				dbCredential = projectCredential
+			}
+		}
+		responseSlice = append(responseSlice, formatCredentialResponse(jenkinsCredential, dbCredential))
 	}
 	return responseSlice
 }

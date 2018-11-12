@@ -56,7 +56,7 @@ func (s *ProjectService) GetProjectHandler(w rest.ResponseWriter, r *rest.Reques
 	err := s.checkProjectUserInRole(operator, projectId,
 		[]string{ProjectOwner, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
@@ -66,12 +66,12 @@ func (s *ProjectService) GetProjectHandler(w rest.ResponseWriter, r *rest.Reques
 		Where(db.Eq(models.ProjectIdColumn, projectId)).
 		LoadOne(project)
 	if err != nil && err != dbr.ErrNotFound {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if err == dbr.ErrNotFound {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -105,7 +105,7 @@ func (s *ProjectService) GetProjectsHandler(w rest.ResponseWriter, r *rest.Reque
 			Where(db.And(membershipCondition...)).
 			Load(&projectMemberships)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -121,7 +121,7 @@ func (s *ProjectService) GetProjectsHandler(w rest.ResponseWriter, r *rest.Reque
 	}
 	_, err := query.Load(&projects)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -134,14 +134,14 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 	request := &CreateProjectRequest{}
 	err := r.DecodeJsonPayload(request)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	project := models.NewProject(request.Name, request.Description, creator, request.Extra)
 	_, err = s.Ds.Jenkins.CreateFolder(project.ProjectId, project.Description)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
@@ -149,7 +149,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		_, err := s.Ds.Jenkins.AddProjectRole(GetProjectRoleName(project.ProjectId, role),
 			GetProjectRolePattern(project.ProjectId), permission, true)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
@@ -158,7 +158,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		_, err := s.Ds.Jenkins.AddProjectRole(GetPipelineRoleName(project.ProjectId, role),
 			GetPipelineRolePattern(project.ProjectId), permission, true)
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 			return
 		}
@@ -166,46 +166,46 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 
 	globalRole, err := s.Ds.Jenkins.GetGlobalRole(constants.JenkinsAllUserRoleName)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = globalRole.AssignRole(creator)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 
 	projectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(project.ProjectId, ProjectOwner))
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	err = projectRole.AssignRole(creator)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	pipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(project.ProjectId, ProjectOwner))
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	err = pipelineRole.AssignRole(creator)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	_, err = s.Ds.Db.InsertInto(models.ProjectTableName).
 		Columns(models.ProjectColumns...).Record(project).Exec()
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -214,7 +214,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 	_, err = s.Ds.Db.InsertInto(models.ProjectMembershipTableName).
 		Columns(models.ProjectMembershipColumns...).Record(projectMembership).Exec()
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -227,13 +227,13 @@ func (s *ProjectService) DeleteProjectHandler(w rest.ResponseWriter, r *rest.Req
 	operator := userutils.GetUserNameFromRequest(r)
 	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	_, err = s.Ds.Jenkins.DeleteJob(projectId)
 	if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
@@ -244,14 +244,14 @@ func (s *ProjectService) DeleteProjectHandler(w rest.ResponseWriter, r *rest.Req
 	}
 	err = s.Ds.Jenkins.DeleteProjectRoles(roleNames...)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 	_, err = s.Ds.Db.DeleteFrom(models.ProjectMembershipTableName).
 		Where(db.Eq(models.ProjectMembershipProjectIdColumn, projectId)).Exec()
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -259,7 +259,7 @@ func (s *ProjectService) DeleteProjectHandler(w rest.ResponseWriter, r *rest.Req
 		Set(constants.StatusColumn, constants.StatusDeleted).
 		Where(db.Eq(models.ProjectIdColumn, projectId)).Exec()
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -269,7 +269,7 @@ func (s *ProjectService) DeleteProjectHandler(w rest.ResponseWriter, r *rest.Req
 		Where(db.Eq(models.ProjectIdColumn, projectId)).
 		LoadOne(project)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -283,13 +283,13 @@ func (s *ProjectService) UpdateProjectHandler(w rest.ResponseWriter, r *rest.Req
 	request := &UpdateProjectRequest{}
 	err := r.DecodeJsonPayload(request)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
@@ -304,7 +304,7 @@ func (s *ProjectService) UpdateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		query.
 			Where(db.Eq(models.ProjectIdColumn, projectId)).Exec()
 		if err != nil {
-			logger.Error("%v", err)
+			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -315,7 +315,7 @@ func (s *ProjectService) UpdateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		Where(db.Eq(models.ProjectIdColumn, projectId)).
 		LoadOne(project)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

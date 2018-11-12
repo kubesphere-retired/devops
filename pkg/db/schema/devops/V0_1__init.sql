@@ -20,3 +20,4 @@ CREATE TABLE `project_membership` (
   `grant_by`   VARCHAR(50) NOT NULL,
   PRIMARY KEY (`username`, `project_id`)
 );
+

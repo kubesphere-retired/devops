@@ -50,5 +50,5 @@ func Serve(cfg *config.Config) {
 	api.Use(rest.DefaultDevStack...)
 	api.SetApp(Router(&s))
 	http.Handle(APIVersion+"/", http.StripPrefix(APIVersion, api.MakeHandler()))
-	logger.Critical("%v", http.ListenAndServe(":8080", nil))
+	logger.Critical("%+v", http.ListenAndServe(":8080", nil))
 }
