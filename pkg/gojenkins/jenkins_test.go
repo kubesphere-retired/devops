@@ -2,6 +2,7 @@ package gojenkins
 
 import (
 	"io/ioutil"
+	"kubesphere.io/devops/pkg/config/test_config"
 	"os"
 	"testing"
 	"time"
@@ -11,15 +12,19 @@ import (
 
 var (
 	jenkins *Jenkins
+	tc = test_config.NewJenkinsTestConfig()
 )
 
 func TestInit(t *testing.T) {
-	jenkins = CreateJenkins(nil, "http://jenkins.kubesphere.com/", "admin", "devops")
+	tc.CheckJenkinsUnitTest(t)
+	jenkins = CreateJenkins(nil, tc.EnvConfig.Jenkins.Address, tc.EnvConfig.Jenkins.User, tc.EnvConfig.Jenkins.Password)
 	_, err := jenkins.Init()
 	assert.Nil(t, err, "Jenkins Initialization should not fail")
 }
 
+
 func TestCreateJobs(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	job1ID := "Job1_test"
 	job2ID := "job2_test"
 	job_data := getFileAsString("job.xml")
@@ -37,7 +42,7 @@ func TestCreateJobs(t *testing.T) {
 }
 
 func TestCreateNodes(t *testing.T) {
-
+	tc.CheckJenkinsUnitTest(t)
 	id1 := "node1_test"
 	id2 := "node2_test"
 	id3 := "node3_test"
@@ -59,12 +64,14 @@ func TestCreateNodes(t *testing.T) {
 }
 
 func TestDeleteNodes(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	id := "node4_test"
 	node, _ := jenkins.DeleteNode(id)
 	assert.NotNil(t, node)
 }
 
 func TestCreateBuilds(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	jobs, _ := jenkins.GetAllJobs()
 	for _, item := range jobs {
 		item.InvokeSimple(map[string]string{"param1": "param1"})
@@ -80,6 +87,7 @@ func TestCreateBuilds(t *testing.T) {
 }
 
 func TestParseBuildHistory(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	r, err := os.Open("_tests/build_history.txt")
 	if err != nil {
 		panic(err)
@@ -89,6 +97,7 @@ func TestParseBuildHistory(t *testing.T) {
 }
 
 func TestCreateViews(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	list_view, err := jenkins.CreateView("test_list_view", LIST_VIEW)
 	assert.Nil(t, err)
 	assert.Equal(t, "test_list_view", list_view.GetName())
@@ -104,18 +113,21 @@ func TestCreateViews(t *testing.T) {
 }
 
 func TestGetAllJobs(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	jobs, _ := jenkins.GetAllJobs()
 	assert.Equal(t, 2, len(jobs))
 	assert.Equal(t, jobs[0].Raw.Color, "blue")
 }
 
 func TestGetAllNodes(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	nodes, _ := jenkins.GetAllNodes()
 	assert.Equal(t, 4, len(nodes))
 	assert.Equal(t, nodes[0].GetName(), "master")
 }
 
 func TestGetAllBuilds(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	builds, _ := jenkins.GetAllBuildIds("Job1_test")
 	for _, b := range builds {
 		build, _ := jenkins.GetBuild("Job1_test", b.Number)
@@ -125,6 +137,7 @@ func TestGetAllBuilds(t *testing.T) {
 }
 
 func TestGetLabel(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	label, err := jenkins.GetLabel("test_label")
 	assert.Nil(t, err)
 	assert.Equal(t, label.GetName(), "test_label")
@@ -150,6 +163,7 @@ func TestGetLabel(t *testing.T) {
 }
 
 func TestBuildMethods(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	job, _ := jenkins.GetJob("Job1_test")
 	build, _ := job.GetLastBuild()
 	params := build.GetParameters()
@@ -157,6 +171,7 @@ func TestBuildMethods(t *testing.T) {
 }
 
 func TestGetSingleJob(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	job, _ := jenkins.GetJob("Job1_test")
 	isRunning, _ := job.IsRunning()
 	config, err := job.GetConfig()
@@ -166,6 +181,7 @@ func TestGetSingleJob(t *testing.T) {
 }
 
 func TestEnableDisableJob(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	job, _ := jenkins.GetJob("Job1_test")
 	result, _ := job.Disable()
 	assert.Equal(t, true, result)
@@ -174,6 +190,7 @@ func TestEnableDisableJob(t *testing.T) {
 }
 
 func TestCopyDeleteJob(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	job, _ := jenkins.GetJob("Job1_test")
 	jobCopy, _ := job.Copy("Job1_test_copy")
 	assert.Equal(t, jobCopy.GetName(), "Job1_test_copy")
@@ -182,17 +199,20 @@ func TestCopyDeleteJob(t *testing.T) {
 }
 
 func TestGetPlugins(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	plugins, _ := jenkins.GetPlugins(3)
 	assert.Equal(t, 5, plugins.Count())
 }
 
 func TestGetViews(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	views, _ := jenkins.GetAllViews()
 	assert.Equal(t, len(views), 3)
 	assert.Equal(t, len(views[0].Raw.Jobs), 2)
 }
 
 func TestGetSingleView(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	view, _ := jenkins.GetView("All")
 	view2, _ := jenkins.GetView("test_list_view")
 	assert.Equal(t, len(view.Raw.Jobs), 2)
@@ -201,10 +221,11 @@ func TestGetSingleView(t *testing.T) {
 }
 
 func TestCreateFolder(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	folder1ID := "folder1_test"
 	folder2ID := "folder2_test"
 
-	folder1, err := jenkins.CreateFolder(folder1ID)
+	folder1, err := jenkins.CreateFolder(folder1ID,"")
 	assert.Nil(t, err)
 	assert.NotNil(t, folder1)
 	assert.Equal(t, folder1ID, folder1.GetName())
@@ -216,6 +237,7 @@ func TestCreateFolder(t *testing.T) {
 }
 
 func TestCreateJobInFolder(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	jobName := "Job_test"
 	job_data := getFileAsString("job.xml")
 
@@ -233,6 +255,7 @@ func TestCreateJobInFolder(t *testing.T) {
 }
 
 func TestGetFolder(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	folder1ID := "folder1_test"
 	folder2ID := "folder2_test"
 
@@ -248,6 +271,7 @@ func TestGetFolder(t *testing.T) {
 }
 
 func TestConcurrentRequests(t *testing.T) {
+	tc.CheckJenkinsUnitTest(t)
 	for i := 0; i <= 16; i++ {
 		go func() {
 			jenkins.GetAllJobs()

@@ -1,4 +1,5 @@
 TAG=$(tag)
+TEST?=$$(go list ./... |grep -v 'vendor')
 
 .PHONY: test build clean check build-flyway
 check:
@@ -15,6 +16,8 @@ image:
 	hack/build-image.sh $(TAG)
 clean:
 	rm -rf cmd/server
+test:
+	go test $(TEST) -v -timeout 120m
 
 
 build-image-%: ## build docker image
