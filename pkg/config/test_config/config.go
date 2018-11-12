@@ -26,7 +26,7 @@ func (tc DbTestConfig) GetDatabaseConn() *db.Database {
 	if tc.openDbUnitTests == "1" {
 		d, err := db.OpenDatabase(tc.EnvConfig.Mysql)
 		if err != nil {
-			logger.Critical( "failed to open database %+v", tc.EnvConfig.Mysql)
+			logger.Critical("failed to open database %+v", tc.EnvConfig.Mysql)
 		}
 		return d
 	}
@@ -39,24 +39,21 @@ func (tc DbTestConfig) CheckDbUnitTest(t *testing.T) {
 	}
 }
 
-
 type JenkinsTestConfig struct {
 	openJenkinsUnitTests string
-	EnvConfig       *config.Config
+	EnvConfig            *config.Config
 }
 
 func NewJenkinsTestConfig() JenkinsTestConfig {
 	tc := JenkinsTestConfig{
 		openJenkinsUnitTests: os.Getenv("KS_DEVOPS_JK_UNIT_TEST"),
-		EnvConfig:       config.LoadConf(),
+		EnvConfig:            config.LoadConf(),
 	}
 	return tc
 }
-
 
 func (tc JenkinsTestConfig) CheckJenkinsUnitTest(t *testing.T) {
 	if tc.openJenkinsUnitTests != "1" {
 		t.Skipf("if you want run unit tests with db,set KS_DEVOPS_JK_UNIT_TEST=1")
 	}
 }
-

@@ -2,17 +2,18 @@ package gojenkins
 
 import (
 	"io/ioutil"
-	"kubesphere.io/devops/pkg/config/test_config"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"kubesphere.io/devops/pkg/config/test_config"
 )
 
 var (
 	jenkins *Jenkins
-	tc = test_config.NewJenkinsTestConfig()
+	tc      = test_config.NewJenkinsTestConfig()
 )
 
 func TestInit(t *testing.T) {
@@ -21,7 +22,6 @@ func TestInit(t *testing.T) {
 	_, err := jenkins.Init()
 	assert.Nil(t, err, "Jenkins Initialization should not fail")
 }
-
 
 func TestCreateJobs(t *testing.T) {
 	tc.CheckJenkinsUnitTest(t)
@@ -225,7 +225,7 @@ func TestCreateFolder(t *testing.T) {
 	folder1ID := "folder1_test"
 	folder2ID := "folder2_test"
 
-	folder1, err := jenkins.CreateFolder(folder1ID,"")
+	folder1, err := jenkins.CreateFolder(folder1ID, "")
 	assert.Nil(t, err)
 	assert.NotNil(t, folder1)
 	assert.Equal(t, folder1ID, folder1.GetName())
