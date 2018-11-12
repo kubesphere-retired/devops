@@ -86,14 +86,14 @@ type GithubSource struct {
 }
 
 type SvnSource struct {
-	Remote            string `json:"remote"`
-	CredentialId      string `json:"credential_id"`
-	Includes          string `json:"includes"`
-	Excludes          string `json:"excludes"`
+	Remote       string `json:"remote"`
+	CredentialId string `json:"credential_id" mapstructure:"credential_id"`
+	Includes     string `json:"includes"`
+	Excludes     string `json:"excludes"`
 }
 type SingleSvnSource struct {
-	Remote        string `json:"remote"`
-	CredentialId  string `json:"credential_id"`
+	Remote       string `json:"remote"`
+	CredentialId string `json:"credential_id" mapstructure:"credential_id"`
 }
 
 type ScmInfo struct {
@@ -466,6 +466,66 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 						return nil, err
 					}
 					pipeline.Source = scmSource
+				case "jenkins.scm.impl.SingleSCMSource":
+					singleSvnSource := &SingleSvnSource{}
+
+					if scm := source.SelectElement("scm"); scm != nil {
+						if locations := scm.SelectElement("locations"); locations != nil {
+							if moduleLocations := locations.SelectElement("hudson.scm.SubversionSCM_-ModuleLocation"); moduleLocations != nil {
+								if remote := moduleLocations.SelectElement("remote"); remote != nil {
+									singleSvnSource.Remote = remote.Text()
+								}
+								if credentialId := moduleLocations.SelectElement("credentialsId"); credentialId != nil {
+									singleSvnSource.CredentialId = credentialId.Text()
+								}
+							}
+						}
+					}
+
+					scmSource := Source{
+						Type: "single_svn",
+					}
+					jsonByte, err := json.Marshal(singleSvnSource)
+					if err != nil {
+						return nil, err
+					}
+					err = json.Unmarshal(jsonByte, &scmSource.Define)
+					if err != nil {
+						return nil, err
+					}
+					pipeline.Source = scmSource
+
+				case "jenkins.scm.impl.subversion.SubversionSCMSource":
+					svnSource := &SvnSource{}
+
+					if remote := source.SelectElement("remoteBase"); remote != nil {
+						svnSource.Remote = remote.Text()
+					}
+
+					if credentialsId := source.SelectElement("credentialsId"); credentialsId != nil {
+						svnSource.CredentialId = credentialsId.Text()
+					}
+
+					if includes := source.SelectElement("includes"); includes != nil {
+						svnSource.Includes = includes.Text()
+					}
+
+					if excludes := source.SelectElement("excludes"); excludes != nil {
+						svnSource.Excludes = excludes.Text()
+					}
+
+					scmSource := Source{
+						Type: "svn",
+					}
+					jsonByte, err := json.Marshal(svnSource)
+					if err != nil {
+						return nil, err
+					}
+					err = json.Unmarshal(jsonByte, &scmSource.Define)
+					if err != nil {
+						return nil, err
+					}
+					pipeline.Source = scmSource
 				}
 
 			}
@@ -670,13 +730,17 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 			return "", err
 		}
 		svnSource := branchSource.CreateElement("source")
-		svnSource.CreateAttr("class", "jenkins.scm.impl.subversion.SubversionSCMSource")
-		svnSource.CreateAttr("plugin", "subversion")
+		svnSource.CreateAttr("class", "jenkins.scm.impl.SingleSCMSource")
+		svnSource.CreateAttr("plugin", "scm-api")
 
 		svnSource.CreateElement("id").SetText(idutils.GetUuid("single-svn-"))
 		svnSource.CreateElement("name").SetText("master")
 
-		location := svnSource.CreateElement("locations").CreateElement("hudson.scm.SubversionSCM_-ModuleLocation")
+		scm := svnSource.CreateElement("scm")
+		scm.CreateAttr("class", "hudson.scm.SubversionSCM")
+		scm.CreateAttr("plugin", "subversion")
+
+		location := scm.CreateElement("locations").CreateElement("hudson.scm.SubversionSCM_-ModuleLocation")
 		location.CreateElement("remote").SetText(singleSvnDefine.Remote)
 		location.CreateElement("credentialsId").SetText(singleSvnDefine.CredentialId)
 		location.CreateElement("local").SetText(".")
@@ -689,12 +753,10 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 		svnSource.CreateElement("excludedUsers")
 		svnSource.CreateElement("excludedRevprop")
 		svnSource.CreateElement("excludedCommitMessages")
-		svnSource.CreateElement("workspaceUpdater").CreateAttr("class","hudson.scm.subversion.UpdateUpdater" )
+		svnSource.CreateElement("workspaceUpdater").CreateAttr("class", "hudson.scm.subversion.UpdateUpdater")
 		svnSource.CreateElement("ignoreDirPropChanges").SetText("false")
 		svnSource.CreateElement("filterChangelog").SetText("false")
 		svnSource.CreateElement("quietOperation").SetText("true")
-
-
 
 	default:
 		return "", fmt.Errorf("unsupport source type")
