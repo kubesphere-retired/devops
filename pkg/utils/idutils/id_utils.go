@@ -29,7 +29,9 @@ var sf *sonyflake.Sonyflake
 
 func init() {
 	var st sonyflake.Settings
-	st.MachineID = machineID
+	if len(os.Getenv("DEVOPSPHERE_IP")) != 0 {
+		st.MachineID = machineID
+	}
 	sf = sonyflake.NewSonyflake(st)
 	if sf == nil {
 		panic("failed to initialize sonyflake")
