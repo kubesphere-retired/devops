@@ -121,7 +121,10 @@ type Parameter struct {
 }
 
 type TimerTrigger struct {
+	// user in no scm job
 	Cron     string `json:"cron,omitempty"`
+
+	// use in multi-branch job
 	Interval string `json:"interval,omitempty"`
 }
 
@@ -297,6 +300,7 @@ func parsePipelineConfigXml(config string) (*Pipeline, error) {
 				for _, choice := range choices {
 					choiceParameter.DefaultValue += fmt.Sprintf("%s\n", choice.Text())
 				}
+				choiceParameter.DefaultValue = strings.TrimSpace(choiceParameter.DefaultValue)
 				pipeline.Parameters = append(pipeline.Parameters, choiceParameter)
 			default:
 				pipeline.Parameters = append(pipeline.Parameters, &Parameter{
@@ -331,6 +335,7 @@ func parsePipelineConfigXml(config string) (*Pipeline, error) {
 	}
 	return pipeline, nil
 }
+
 func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, error) {
 	pipeline := &MultiBranchPipeline{}
 	config = replaceXmlVersion(config, "1.1", "1.0")
@@ -580,6 +585,7 @@ func parseMultiBranchPipelineScm(config string) (*ScmInfo, error) {
 	return nil, nil
 
 }
+
 func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, error) {
 	doc := etree.NewDocument()
 	xmlString := `
