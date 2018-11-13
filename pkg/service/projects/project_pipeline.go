@@ -122,7 +122,7 @@ type Parameter struct {
 
 type TimerTrigger struct {
 	// user in no scm job
-	Cron     string `json:"cron,omitempty"`
+	Cron string `json:"cron,omitempty"`
 
 	// use in multi-branch job
 	Interval string `json:"interval,omitempty"`

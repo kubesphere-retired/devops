@@ -18,10 +18,10 @@ func Test_NoScmPipelineConfig(t *testing.T) {
 			Jenkinsfile: "node{echo 'hello'}",
 		},
 		&Pipeline{
-			Name:        "",
-			Description: "",
-			Jenkinsfile: "node{echo 'hello'}",
-			DisableConcurrent:true,
+			Name:              "",
+			Description:       "",
+			Jenkinsfile:       "node{echo 'hello'}",
+			DisableConcurrent: true,
 		},
 	}
 	for _, input := range inputs {
@@ -170,7 +170,7 @@ func Test_NoScmPipelineConfig_Trigger(t *testing.T) {
 			Description: "for test",
 			Jenkinsfile: "node{echo 'hello'}",
 			RemoteTrigger: &RemoteTrigger{
-				Token:"abc",
+				Token: "abc",
 			},
 		},
 		&Pipeline{
@@ -181,7 +181,7 @@ func Test_NoScmPipelineConfig_Trigger(t *testing.T) {
 				Cron: "1 1 1 * * *",
 			},
 			RemoteTrigger: &RemoteTrigger{
-				Token:"abc",
+				Token: "abc",
 			},
 		},
 	}
