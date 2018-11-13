@@ -17,6 +17,8 @@ const SSHCrenditalStaplerClass = "com.cloudbees.jenkins.plugins.sshcredentials.i
 const DirectSSHCrenditalStaplerClass = "com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey$DirectEntryPrivateKeySource"
 const UsernamePassswordCredentialStaplerClass = "com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl"
 const SecretTextCredentialStaplerClass = "org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl"
+const KubeconfigCredentialStaplerClass = "com.microsoft.jenkins.kubernetes.credentials.KubeconfigCredentials"
+const DirectKubeconfigCredentialStaperClass = "com.microsoft.jenkins.kubernetes.credentials.KubeconfigCredentials$DirectEntryKubeconfigSource"
 const GLOBALScope = "GLOBAL"
 
 type CreateSshCredentialRequest struct {
@@ -29,6 +31,10 @@ type CreateUsernamePasswordCredentialRequest struct {
 
 type CreateSecretTextCredentialRequest struct {
 	Credentials SecretTextCredential `json:"credentials"`
+}
+
+type CreateKubeconfigCredentialRequest struct {
+	Credentials KubeconfigCredential `json:"credentials"`
 }
 
 type UsernamePasswordCredential struct {
@@ -58,9 +64,22 @@ type SecretTextCredential struct {
 	StaplerClass string `json:"stapler-class"`
 }
 
+type KubeconfigCredential struct {
+	Scope            string           `json:"scope"`
+	Id               string           `json:"id"`
+	Description      string           `json:"description"`
+	KubeconfigSource KubeconfigSource `json:"kubeconfigSource"`
+	StaplerClass     string           `json:"stapler-class"`
+}
+
 type PrivateKeySource struct {
 	StaplerClass string `json:"stapler-class"`
 	PrivateKey   string `json:"privateKey"`
+}
+
+type KubeconfigSource struct {
+	StaplerClass string `json:"stapler-class"`
+	Content      string `json:"content"`
 }
 
 type CredentialResponse struct {
@@ -133,6 +152,25 @@ func NewCreateSecretTextCredentialRequest(id, secret, description string) *Creat
 	}
 }
 
+func NewCreateKubeconfigCredentialRequest(id, content, description string) *CreateKubeconfigCredentialRequest {
+
+	credentialSource := KubeconfigSource{
+		StaplerClass: DirectKubeconfigCredentialStaperClass,
+		Content:      content,
+	}
+
+	credential := KubeconfigCredential{
+		Scope:            GLOBALScope,
+		Id:               id,
+		Description:      description,
+		KubeconfigSource: credentialSource,
+		StaplerClass:     KubeconfigCredentialStaplerClass,
+	}
+	return &CreateKubeconfigCredentialRequest{
+		credential,
+	}
+}
+
 func NewSshCredential(id, username, passphrase, privateKey, description string) *SshCredential {
 	keySource := PrivateKeySource{
 		StaplerClass: DirectSSHCrenditalStaplerClass,
@@ -168,5 +206,20 @@ func NewSecretTextCredential(id, secret, description string) *SecretTextCredenti
 		Secret:       secret,
 		Description:  description,
 		StaplerClass: SecretTextCredentialStaplerClass,
+	}
+}
+
+func NewKubeconfigCredential(id, content, description string) *KubeconfigCredential {
+	credentialSource := KubeconfigSource{
+		StaplerClass: DirectKubeconfigCredentialStaperClass,
+		Content:      content,
+	}
+
+	return &KubeconfigCredential{
+		Scope:            GLOBALScope,
+		Id:               id,
+		Description:      description,
+		KubeconfigSource: credentialSource,
+		StaplerClass:     KubeconfigCredentialStaplerClass,
 	}
 }

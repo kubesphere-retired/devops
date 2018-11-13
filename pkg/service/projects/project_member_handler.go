@@ -194,6 +194,12 @@ func (s *ProjectService) UpdateMemberHandler(w rest.ResponseWriter, r *rest.Requ
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if username == operator {
+		err := fmt.Errorf("you can not change your role")
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	if !reflectutils.In(request.Role, AllRoleSlice) {
 		err := fmt.Errorf("err role [%s] not in [%s]", request.Role, AllRoleSlice)
 		logger.Error("%+v", err)
