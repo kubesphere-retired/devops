@@ -24,6 +24,7 @@ import (
 
 	"kubesphere.io/devops/pkg/constants"
 	"kubesphere.io/devops/pkg/db"
+	"kubesphere.io/devops/pkg/gojenkins"
 	"kubesphere.io/devops/pkg/logger"
 	"kubesphere.io/devops/pkg/models"
 	"kubesphere.io/devops/pkg/utils/stringutils"
@@ -169,6 +170,15 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
+	}
+	if globalRole == nil {
+		_, err := s.Ds.Jenkins.AddGlobalRole(constants.JenkinsAllUserRoleName, gojenkins.GlobalPermissionIds{
+			GlobalRead: true,
+		}, true)
+		if err != nil {
+			logger.Critical("failed to create jenkins global role")
+			panic(err)
+		}
 	}
 	err = globalRole.AssignRole(creator)
 	if err != nil {
