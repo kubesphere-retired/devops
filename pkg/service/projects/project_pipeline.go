@@ -70,16 +70,16 @@ type Source struct {
 }
 
 type GitSource struct {
-	Url              string `json:"url,omitempty"`
+	Url              string `json:"url,omitempty" mapstructure:"url"`
 	CredentialId     string `json:"credential_id,omitempty" mapstructure:"credential_id"`
 	DiscoverBranches bool   `json:"discover_branches,omitempty" mapstructure:"discover_branches"`
 }
 
 type GithubSource struct {
-	Owner                string                     `json:"owner,omitempty"`
-	Repo                 string                     `json:"repo,omitempty"`
+	Owner                string                     `json:"owner,omitempty" mapstructure:"owner"`
+	Repo                 string                     `json:"repo,omitempty" mapstructure:"repo"`
 	CredentialId         string                     `json:"credential_id,omitempty" mapstructure:"credential_id"`
-	ApiUri               string                     `json:"api_uri,omitempty"`
+	ApiUri               string                     `json:"api_uri,omitempty" mapstructure:"api_uri"`
 	DiscoverBranches     int                        `json:"discover_branches,omitempty" mapstructure:"discover_branches"`
 	DiscoverPRFromOrigin int                        `json:"discover_pr_from_origin,omitempty" mapstructure:"discover_pr_from_origin"`
 	DiscoverPRFromForks  *GithubDiscoverPRFromForks `json:"discover_pr_from_forks,omitempty" mapstructure:"discover_pr_from_forks"`
@@ -104,8 +104,8 @@ type ScmInfo struct {
 }
 
 type GithubDiscoverPRFromForks struct {
-	Strategy int `json:"strategy"`
-	Trust    int `json:"trust"`
+	Strategy int `json:"strategy" mapstructure:"strategy"`
+	Trust    int `json:"trust" mapstructure:"trust"`
 }
 
 type DiscarderProperty struct {
@@ -458,7 +458,7 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 
 					traits := source.SelectElement("traits")
 					if branchDiscoverTrait := traits.SelectElement(
-						"org.jenkinsci.plugins.github__branch__source.BranchDiscoveryTrait"); branchDiscoverTrait != nil {
+						"jenkins.plugins.git.traits.BranchDiscoveryTrait"); branchDiscoverTrait != nil {
 						gitSource.DiscoverBranches = true
 					}
 					scmSource := Source{

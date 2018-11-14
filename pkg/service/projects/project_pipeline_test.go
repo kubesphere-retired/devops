@@ -1,6 +1,7 @@
 package projects
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 )
@@ -264,9 +265,9 @@ func Test_MultiBranchPipelineConfig_Discarder(t *testing.T) {
 			Source: &Source{
 				Type: "git",
 			},
-			Discarder:&DiscarderProperty{
+			Discarder: &DiscarderProperty{
 				DaysToKeep: "1",
-				NumToKeep: "2",
+				NumToKeep:  "2",
 			},
 		},
 	}
@@ -295,7 +296,7 @@ func Test_MultiBranchPipelineConfig_TimerTrigger(t *testing.T) {
 			Source: &Source{
 				Type: "git",
 			},
-			TimerTrigger:&TimerTrigger{
+			TimerTrigger: &TimerTrigger{
 				Interval: "12345566",
 			},
 		},
@@ -316,8 +317,8 @@ func Test_MultiBranchPipelineConfig_TimerTrigger(t *testing.T) {
 	}
 }
 
-
 func Test_MultiBranchPipelineConfig_Source(t *testing.T) {
+
 	inputs := []*MultiBranchPipeline{
 		&MultiBranchPipeline{
 			Name:        "",
@@ -326,11 +327,79 @@ func Test_MultiBranchPipelineConfig_Source(t *testing.T) {
 			Source: &Source{
 				Type: "git",
 			},
-			TimerTrigger:&TimerTrigger{
+			TimerTrigger: &TimerTrigger{
+				Interval: "12345566",
+			},
+		},
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "github",
+			},
+			TimerTrigger: &TimerTrigger{
+				Interval: "12345566",
+			},
+		},
+
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "svn",
+			},
+			TimerTrigger: &TimerTrigger{
+				Interval: "12345566",
+			},
+		},
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "single_svn",
+			},
+			TimerTrigger: &TimerTrigger{
 				Interval: "12345566",
 			},
 		},
 	}
+	jsonByte, _ := json.Marshal(&GitSource{
+		Url:              "https://github.com/kubesphere/devops",
+		CredentialId:     "git",
+		DiscoverBranches: true,
+	})
+	json.Unmarshal(jsonByte, &inputs[0].Source.Define)
+
+	jsonByte, _ = json.Marshal(&GithubSource{
+		Owner:                "kubesphere",
+		Repo:                 "devops",
+		CredentialId:         "github",
+		ApiUri:               "https://api.github.com",
+		DiscoverBranches:     1,
+		DiscoverPRFromOrigin: 2,
+		DiscoverPRFromForks: &GithubDiscoverPRFromForks{
+			Strategy: 1,
+			Trust:    1,
+		},
+	})
+	json.Unmarshal(jsonByte, &inputs[1].Source.Define)
+
+	jsonByte, _ = json.Marshal(&SvnSource{
+		Remote:       "https://api.svn.com/bcd",
+		CredentialId: "svn",
+		Excludes:     "truck",
+		Includes:     "tag/*",
+	})
+	json.Unmarshal(jsonByte, &inputs[2].Source.Define)
+
+	jsonByte, _ = json.Marshal(&SingleSvnSource{
+		Remote:       "https://api.svn.com/bcd",
+		CredentialId: "svn",
+	})
+	json.Unmarshal(jsonByte, &inputs[3].Source.Define)
 	for _, input := range inputs {
 		outputString, err := createMultiBranchPipelineConfigXml(input)
 		if err != nil {
