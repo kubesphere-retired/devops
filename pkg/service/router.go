@@ -42,7 +42,10 @@ func Router(s *Server) (app rest.App) {
 		rest.Put("/projects/:id/pipelines/:pid", s.Projects.UpdatePipelineHandler),
 		rest.Delete("/projects/:id/pipelines/:pid", s.Projects.DeletePipelineHandler),
 		rest.Get("/projects/:id/pipelines/:pid/scm", s.Projects.GetPipelineScmHandler),
-		rest.Get("/projects/default_roles/", s.Projects.GetProjectDefaultRolesHandler))
+		rest.Get("/projects/default_roles/", s.Projects.GetProjectDefaultRolesHandler),
+		rest.Post("/projects/:id/workspace_members", s.Projects.AddWorkspaceMemberHandler),
+		rest.Delete("/projects/:id/workspace_members/:uid", s.Projects.DeleteWorkspaceMember),
+		rest.Patch("/projects/:id/workspace_members/:uid", s.Projects.UpdateWorkspaceMember))
 	if err != nil {
 		logger.Critical("%+v", err)
 		return
