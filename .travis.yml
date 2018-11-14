@@ -22,13 +22,14 @@ scripts:
   - make test
 
 deploy:
-- provider: script
-  script: bash hack/docker_push.sh latest
-  on:
-    branch: master
-    repo: kubesphere/devops
-- provider: script
-  script: bash hack/docker_push.sh $TRAVIS_TAG
-  on:
-    tags: true
-    repo: kubesphere/devops
+  - provider: script
+    script: bash hack/docker_push.sh latest
+    on:
+      branch: master
+      repo: kubesphere/devops
+  - provider: script
+    script: bash hack/docker_push.sh $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      repo: kubesphere/devops
