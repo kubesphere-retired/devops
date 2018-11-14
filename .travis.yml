@@ -29,7 +29,7 @@ deploy:
     repo: kubesphere/devops
 
 - provider: script
-  script: bash docker_push $TRAVIS_TAG
+  script: bash hack/docker_push.sh $TRAVIS_TAG
   on:
     tags: true
     repo: kubesphere/devops
