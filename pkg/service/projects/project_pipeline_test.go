@@ -201,3 +201,148 @@ func Test_NoScmPipelineConfig_Trigger(t *testing.T) {
 		}
 	}
 }
+
+func Test_MultiBranchPipelineConfig(t *testing.T) {
+
+	inputs := []*MultiBranchPipeline{
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "git",
+			},
+		},
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "github",
+			},
+		},
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "single_svn",
+			},
+		},
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "svn",
+			},
+		},
+	}
+	for _, input := range inputs {
+		outputString, err := createMultiBranchPipelineConfigXml(input)
+		if err != nil {
+			t.Fatalf("should not get error %+v", err)
+		}
+		output, err := parseMultiBranchPipelineConfigXml(outputString)
+
+		if err != nil {
+			t.Fatalf("should not get error %+v", err)
+		}
+		if !reflect.DeepEqual(input, output) {
+			t.Fatalf("input [%+v] output [%+v] should equal ", input, output)
+		}
+	}
+}
+
+func Test_MultiBranchPipelineConfig_Discarder(t *testing.T) {
+
+	inputs := []*MultiBranchPipeline{
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "git",
+			},
+			Discarder:&DiscarderProperty{
+				DaysToKeep: "1",
+				NumToKeep: "2",
+			},
+		},
+	}
+	for _, input := range inputs {
+		outputString, err := createMultiBranchPipelineConfigXml(input)
+		if err != nil {
+			t.Fatalf("should not get error %+v", err)
+		}
+		output, err := parseMultiBranchPipelineConfigXml(outputString)
+
+		if err != nil {
+			t.Fatalf("should not get error %+v", err)
+		}
+		if !reflect.DeepEqual(input, output) {
+			t.Fatalf("input [%+v] output [%+v] should equal ", input, output)
+		}
+	}
+}
+
+func Test_MultiBranchPipelineConfig_TimerTrigger(t *testing.T) {
+	inputs := []*MultiBranchPipeline{
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "git",
+			},
+			TimerTrigger:&TimerTrigger{
+				Interval: "12345566",
+			},
+		},
+	}
+	for _, input := range inputs {
+		outputString, err := createMultiBranchPipelineConfigXml(input)
+		if err != nil {
+			t.Fatalf("should not get error %+v", err)
+		}
+		output, err := parseMultiBranchPipelineConfigXml(outputString)
+
+		if err != nil {
+			t.Fatalf("should not get error %+v", err)
+		}
+		if !reflect.DeepEqual(input, output) {
+			t.Fatalf("input [%+v] output [%+v] should equal ", input, output)
+		}
+	}
+}
+
+
+func Test_MultiBranchPipelineConfig_Source(t *testing.T) {
+	inputs := []*MultiBranchPipeline{
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "git",
+			},
+			TimerTrigger:&TimerTrigger{
+				Interval: "12345566",
+			},
+		},
+	}
+	for _, input := range inputs {
+		outputString, err := createMultiBranchPipelineConfigXml(input)
+		if err != nil {
+			t.Fatalf("should not get error %+v", err)
+		}
+		output, err := parseMultiBranchPipelineConfigXml(outputString)
+
+		if err != nil {
+			t.Fatalf("should not get error %+v", err)
+		}
+		if !reflect.DeepEqual(input, output) {
+			t.Fatalf("input [%+v] output [%+v] should equal ", input, output)
+		}
+	}
+}
