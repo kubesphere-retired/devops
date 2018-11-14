@@ -11,6 +11,7 @@ import (
 type GlobalRoleResponse struct {
 	RoleName      string              `json:"roleName"`
 	PermissionIds GlobalPermissionIds `json:"permissionIds"`
+	Sids          []string            `json:"sids"`
 }
 
 type GlobalRole struct {
@@ -59,6 +60,7 @@ type ProjectRoleResponse struct {
 	RoleName      string               `json:"roleName"`
 	PermissionIds ProjectPermissionIds `json:"permissionIds"`
 	Pattern       string               `json:"pattern"`
+	Sids          []string             `json:"sids"`
 }
 
 type ProjectPermissionIds struct {
