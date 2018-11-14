@@ -32,3 +32,4 @@ deploy:
     on:
       tags: true
       repo: kubesphere/devops
+      all_branches: true
