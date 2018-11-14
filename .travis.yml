@@ -27,7 +27,6 @@ deploy:
   on:
     branch: master
     repo: kubesphere/devops
-
 - provider: script
   script: bash hack/docker_push.sh $TRAVIS_TAG
   on:
