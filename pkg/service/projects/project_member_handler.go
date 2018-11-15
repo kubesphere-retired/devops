@@ -134,6 +134,24 @@ func (s *ProjectService) AddProjectMemberHandler(w rest.ResponseWriter, r *rest.
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
+	membership := &models.ProjectMembership{}
+	err = s.Ds.Db.Select(models.ProjectMembershipColumns...).
+		From(models.ProjectMembershipTableName).
+		Where(db.And(
+			db.Eq(models.ProjectMembershipUsernameColumn, request.Username),
+			db.Eq(models.ProjectMembershipProjectIdColumn, projectId))).LoadOne(membership)
+	if err != nil && err != db.ErrNotFound{
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err != db.ErrNotFound{
+		err = fmt.Errorf("user [%s] have been added to project", request.Username)
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	globalRole, err := s.Ds.Jenkins.GetGlobalRole(constants.JenkinsAllUserRoleName)
 	if err != nil {
 		logger.Error("%+v", err)
@@ -333,9 +351,16 @@ func (s *ProjectService) DeleteMemberHandler(w rest.ResponseWriter, r *rest.Requ
 			db.Eq(models.ProjectMembershipUsernameColumn, username),
 			db.Eq(models.ProjectMembershipProjectIdColumn, projectId),
 		)).LoadOne(oldMembership)
-	if err != nil {
+	if err != nil && err != db.ErrNotFound {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err == db.ErrNotFound {
+		logger.Warn("user [%s] not found in project", username)
+		w.WriteJson(struct {
+			Username string `json:"username"`
+		}{Username: username})
 		return
 	}
 	if oldMembership.Role == ProjectOwner {
