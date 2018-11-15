@@ -32,11 +32,9 @@ import (
 )
 
 type CreateProjectRequest struct {
-	Name              string   `json:"name"`
-	Description       string   `json:"description"`
-	Extra             string   `json:"extra"`
-	WorkspaceAdmins   []string `json:"workspace_admins"`
-	WorkspacesViewers []string `json:"workspaces_viewers"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Extra       string `json:"extra"`
 }
 
 type UpdateProjectRequest struct {
@@ -189,26 +187,26 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		return
 	}
 
-	projectAdminRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(project.ProjectId, ProjectOwner))
+	projectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(project.ProjectId, ProjectOwner))
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = projectAdminRole.AssignRole(creator)
+	err = projectRole.AssignRole(creator)
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	pipelineAdminRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(project.ProjectId, ProjectOwner))
+	pipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(project.ProjectId, ProjectOwner))
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
-	err = pipelineAdminRole.AssignRole(creator)
+	err = pipelineRole.AssignRole(creator)
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
@@ -222,66 +220,9 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		return
 	}
 
-	pipelineViewerRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(project.ProjectId, ProjectReporter))
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-
-	projectViewerRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(project.ProjectId, ProjectReporter))
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-
-	for _, workspaceAdmin := range request.WorkspaceAdmins {
-		err = globalRole.AssignRole(workspaceAdmin)
-		if err != nil {
-			logger.Error("%+v", err)
-			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-			return
-		}
-		err = projectAdminRole.AssignRole(workspaceAdmin)
-		if err != nil {
-			logger.Error("%+v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		err = pipelineAdminRole.AssignRole(workspaceAdmin)
-		if err != nil {
-			logger.Error("%+v", err)
-			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-			return
-		}
-	}
-
-	for _, workspaceViewer := range request.WorkspacesViewers {
-		err = globalRole.AssignRole(workspaceViewer)
-		if err != nil {
-			logger.Error("%+v", err)
-			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-			return
-		}
-		err = projectViewerRole.AssignRole(workspaceViewer)
-		if err != nil {
-			logger.Error("%+v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		err = pipelineViewerRole.AssignRole(workspaceViewer)
-		if err != nil {
-			logger.Error("%+v", err)
-			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-			return
-		}
-	}
-
 	projectMembership := models.NewProjectMemberShip(creator, project.ProjectId, ProjectOwner, creator)
-	insertStmt := s.Ds.Db.InsertInto(models.ProjectMembershipTableName).
-		Columns(models.ProjectMembershipColumns...).Record(projectMembership)
-	_, err = insertStmt.Exec()
+	_, err = s.Ds.Db.InsertInto(models.ProjectMembershipTableName).
+		Columns(models.ProjectMembershipColumns...).Record(projectMembership).Exec()
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
