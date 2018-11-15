@@ -140,12 +140,12 @@ func (s *ProjectService) AddProjectMemberHandler(w rest.ResponseWriter, r *rest.
 		Where(db.And(
 			db.Eq(models.ProjectMembershipUsernameColumn, request.Username),
 			db.Eq(models.ProjectMembershipProjectIdColumn, projectId))).LoadOne(membership)
-	if err != nil && err != db.ErrNotFound{
+	if err != nil && err != db.ErrNotFound {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err != db.ErrNotFound{
+	if err != db.ErrNotFound {
 		err = fmt.Errorf("user [%s] have been added to project", request.Username)
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
