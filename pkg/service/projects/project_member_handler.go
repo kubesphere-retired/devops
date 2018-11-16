@@ -134,6 +134,24 @@ func (s *ProjectService) AddProjectMemberHandler(w rest.ResponseWriter, r *rest.
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
+	membership := &models.ProjectMembership{}
+	err = s.Ds.Db.Select(models.ProjectMembershipColumns...).
+		From(models.ProjectMembershipTableName).
+		Where(db.And(
+			db.Eq(models.ProjectMembershipUsernameColumn, request.Username),
+			db.Eq(models.ProjectMembershipProjectIdColumn, projectId))).LoadOne(membership)
+	if err != nil && err != db.ErrNotFound {
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err != db.ErrNotFound {
+		err = fmt.Errorf("user [%s] have been added to project", request.Username)
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	globalRole, err := s.Ds.Jenkins.GetGlobalRole(constants.JenkinsAllUserRoleName)
 	if err != nil {
 		logger.Error("%+v", err)
@@ -333,9 +351,16 @@ func (s *ProjectService) DeleteMemberHandler(w rest.ResponseWriter, r *rest.Requ
 			db.Eq(models.ProjectMembershipUsernameColumn, username),
 			db.Eq(models.ProjectMembershipProjectIdColumn, projectId),
 		)).LoadOne(oldMembership)
-	if err != nil {
+	if err != nil && err != db.ErrNotFound {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err == db.ErrNotFound {
+		logger.Warn("user [%s] not found in project", username)
+		w.WriteJson(struct {
+			Username string `json:"username"`
+		}{Username: username})
 		return
 	}
 	if oldMembership.Role == ProjectOwner {
@@ -401,165 +426,5 @@ func (s *ProjectService) DeleteMemberHandler(w rest.ResponseWriter, r *rest.Requ
 
 func (s *ProjectService) GetProjectDefaultRolesHandler(w rest.ResponseWriter, r *rest.Request) {
 	w.WriteJson(DefaultRoles)
-	return
-}
-
-func (s *ProjectService) AddWorkspaceMemberHandler(w rest.ResponseWriter, r *rest.Request) {
-	projectId := r.PathParams["id"]
-	operator := userutils.GetUserNameFromRequest(r)
-	request := &AddProjectMemberRequest{}
-	err := r.DecodeJsonPayload(request)
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if govalidator.IsNull(request.Username) {
-		err := fmt.Errorf("error need username")
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if !reflectutils.In(request.Role, AllRoleSlice) {
-		err := fmt.Errorf("err role [%s] not in [%s]", request.Role,
-			AllRoleSlice)
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if operator != constants.KS_ADMIN {
-		err := fmt.Errorf("only ks admin could add workspace member")
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	globalRole, err := s.Ds.Jenkins.GetGlobalRole(constants.JenkinsAllUserRoleName)
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-	if globalRole == nil {
-		_, err := s.Ds.Jenkins.AddGlobalRole(constants.JenkinsAllUserRoleName, gojenkins.GlobalPermissionIds{
-			GlobalRead: true,
-		}, true)
-		if err != nil {
-			logger.Critical("failed to create jenkins global role")
-			panic(err)
-		}
-	}
-	err = globalRole.AssignRole(request.Username)
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-	projectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(projectId, request.Role))
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-	err = projectRole.AssignRole(request.Username)
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-	pipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(projectId, request.Role))
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-	err = pipelineRole.AssignRole(request.Username)
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-	w.WriteJson(models.NewProjectMemberShip(request.Username, projectId, request.Role, constants.KS_ADMIN))
-	return
-}
-
-func (s *ProjectService) DeleteWorkspaceMember(w rest.ResponseWriter, r *rest.Request) {
-	projectId := r.PathParams["id"]
-	operator := userutils.GetUserNameFromRequest(r)
-	username := r.PathParams["uid"]
-	if operator != constants.KS_ADMIN {
-		err := fmt.Errorf("only ks admin could add workspace member")
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	err := s.unAssignProjectMemberInJenkins(projectId, username)
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteJson(struct {
-		Username string `json:"username"`
-	}{Username: username})
-	return
-}
-
-func (s *ProjectService) UpdateWorkspaceMember(w rest.ResponseWriter, r *rest.Request) {
-	projectId := r.PathParams["id"]
-	operator := userutils.GetUserNameFromRequest(r)
-	username := r.PathParams["uid"]
-	request := &UpdateProjectMemberRequest{}
-	err := r.DecodeJsonPayload(request)
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if !reflectutils.In(request.Role, AllRoleSlice) {
-		err := fmt.Errorf("err role [%s] not in [%s]", request.Role, AllRoleSlice)
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if operator != constants.KS_ADMIN {
-		err := fmt.Errorf("only ks admin could add workspace member")
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = s.unAssignProjectMemberInJenkins(projectId, username)
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	projectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(projectId, request.Role))
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-	err = projectRole.AssignRole(username)
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-	pipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(projectId, request.Role))
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-	err = pipelineRole.AssignRole(username)
-	if err != nil {
-		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-		return
-	}
-	w.WriteJson(models.NewProjectMemberShip(username, projectId, request.Role, constants.KS_ADMIN))
 	return
 }

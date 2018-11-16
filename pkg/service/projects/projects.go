@@ -35,7 +35,7 @@ const (
 	ProjectReporter   = "reporter"
 )
 
-var AllRoleSlice = []string{ProjectOwner, ProjectDeveloper, ProjectReporter, ProjectMaintainer}
+var AllRoleSlice = []string{ProjectDeveloper, ProjectReporter, ProjectMaintainer, ProjectOwner}
 
 var JenkinsOwnerProjectPermissionIds = &gojenkins.ProjectPermissionIds{
 	CredentialCreate:        true,
