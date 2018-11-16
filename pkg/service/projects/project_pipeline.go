@@ -60,7 +60,7 @@ type MultiBranchPipeline struct {
 	Description  string             `json:"description"`
 	Discarder    *DiscarderProperty `json:"discarder"`
 	TimerTrigger *TimerTrigger      `json:"timer_trigger" mapstructure:"timer_trigger"`
-	Source       Source             `json:"source"`
+	Source       *Source            `json:"source"`
 	ScriptPath   string             `json:"script_path" mapstructure:"script_path"`
 }
 
@@ -70,30 +70,30 @@ type Source struct {
 }
 
 type GitSource struct {
-	Url              string `json:"url"`
-	CredentialId     string `json:"credential_id" mapstructure:"credential_id"`
-	DiscoverBranches bool   `json:"discover_branches" mapstructure:"discover_branches"`
+	Url              string `json:"url,omitempty" mapstructure:"url"`
+	CredentialId     string `json:"credential_id,omitempty" mapstructure:"credential_id"`
+	DiscoverBranches bool   `json:"discover_branches,omitempty" mapstructure:"discover_branches"`
 }
 
 type GithubSource struct {
-	Owner                string                     `json:"owner"`
-	Repo                 string                     `json:"repo"`
-	CredentialId         string                     `json:"credential_id" mapstructure:"credential_id"`
-	ApiUri               string                     `json:"api_uri,omitempty"`
-	DiscoverBranches     int                        `json:"discover_branches" mapstructure:"discover_branches"`
-	DiscoverPRFromOrigin int                        `json:"discover_pr_from_origin" mapstructure:"discover_pr_from_origin"`
-	DiscoverPRFromForks  *GithubDiscoverPRFromForks `json:"discover_pr_from_forks" mapstructure:"discover_pr_from_forks"`
+	Owner                string                     `json:"owner,omitempty" mapstructure:"owner"`
+	Repo                 string                     `json:"repo,omitempty" mapstructure:"repo"`
+	CredentialId         string                     `json:"credential_id,omitempty" mapstructure:"credential_id"`
+	ApiUri               string                     `json:"api_uri,omitempty" mapstructure:"api_uri"`
+	DiscoverBranches     int                        `json:"discover_branches,omitempty" mapstructure:"discover_branches"`
+	DiscoverPRFromOrigin int                        `json:"discover_pr_from_origin,omitempty" mapstructure:"discover_pr_from_origin"`
+	DiscoverPRFromForks  *GithubDiscoverPRFromForks `json:"discover_pr_from_forks,omitempty" mapstructure:"discover_pr_from_forks"`
 }
 
 type SvnSource struct {
-	Remote       string `json:"remote"`
-	CredentialId string `json:"credential_id" mapstructure:"credential_id"`
-	Includes     string `json:"includes"`
-	Excludes     string `json:"excludes"`
+	Remote       string `json:"remote,omitempty"`
+	CredentialId string `json:"credential_id,omitempty" mapstructure:"credential_id"`
+	Includes     string `json:"includes,omitempty"`
+	Excludes     string `json:"excludes,omitempty"`
 }
 type SingleSvnSource struct {
-	Remote       string `json:"remote"`
-	CredentialId string `json:"credential_id" mapstructure:"credential_id"`
+	Remote       string `json:"remote,omitempty"`
+	CredentialId string `json:"credential_id,omitempty" mapstructure:"credential_id"`
 }
 
 type ScmInfo struct {
@@ -104,8 +104,8 @@ type ScmInfo struct {
 }
 
 type GithubDiscoverPRFromForks struct {
-	Strategy int `json:"strategy"`
-	Trust    int `json:"trust"`
+	Strategy int `json:"strategy" mapstructure:"strategy"`
+	Trust    int `json:"trust" mapstructure:"trust"`
 }
 
 type DiscarderProperty struct {
@@ -121,7 +121,10 @@ type Parameter struct {
 }
 
 type TimerTrigger struct {
-	Cron     string `json:"cron,omitempty"`
+	// user in no scm job
+	Cron string `json:"cron,omitempty"`
+
+	// use in multi-branch job
 	Interval string `json:"interval,omitempty"`
 }
 
@@ -297,6 +300,7 @@ func parsePipelineConfigXml(config string) (*Pipeline, error) {
 				for _, choice := range choices {
 					choiceParameter.DefaultValue += fmt.Sprintf("%s\n", choice.Text())
 				}
+				choiceParameter.DefaultValue = strings.TrimSpace(choiceParameter.DefaultValue)
 				pipeline.Parameters = append(pipeline.Parameters, choiceParameter)
 			default:
 				pipeline.Parameters = append(pipeline.Parameters, &Parameter{
@@ -331,6 +335,7 @@ func parsePipelineConfigXml(config string) (*Pipeline, error) {
 	}
 	return pipeline, nil
 }
+
 func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, error) {
 	pipeline := &MultiBranchPipeline{}
 	config = replaceXmlVersion(config, "1.1", "1.0")
@@ -435,11 +440,13 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 					if err != nil {
 						return nil, err
 					}
-					err = json.Unmarshal(jsonByte, &scmSource.Define)
-					if err != nil {
-						return nil, err
+					if string(jsonByte) != "{}" {
+						err = json.Unmarshal(jsonByte, &scmSource.Define)
+						if err != nil {
+							return nil, err
+						}
 					}
-					pipeline.Source = scmSource
+					pipeline.Source = &scmSource
 				case "jenkins.plugins.git.GitSCMSource":
 					gitSource := &GitSource{}
 					if credential := source.SelectElement("credentialsId"); credential != nil {
@@ -451,7 +458,7 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 
 					traits := source.SelectElement("traits")
 					if branchDiscoverTrait := traits.SelectElement(
-						"org.jenkinsci.plugins.github__branch__source.BranchDiscoveryTrait"); branchDiscoverTrait != nil {
+						"jenkins.plugins.git.traits.BranchDiscoveryTrait"); branchDiscoverTrait != nil {
 						gitSource.DiscoverBranches = true
 					}
 					scmSource := Source{
@@ -461,11 +468,13 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 					if err != nil {
 						return nil, err
 					}
-					err = json.Unmarshal(jsonByte, &scmSource.Define)
-					if err != nil {
-						return nil, err
+					if string(jsonByte) != "{}" {
+						err = json.Unmarshal(jsonByte, &scmSource.Define)
+						if err != nil {
+							return nil, err
+						}
 					}
-					pipeline.Source = scmSource
+					pipeline.Source = &scmSource
 				case "jenkins.scm.impl.SingleSCMSource":
 					singleSvnSource := &SingleSvnSource{}
 
@@ -489,11 +498,13 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 					if err != nil {
 						return nil, err
 					}
-					err = json.Unmarshal(jsonByte, &scmSource.Define)
-					if err != nil {
-						return nil, err
+					if string(jsonByte) != "{}" {
+						err = json.Unmarshal(jsonByte, &scmSource.Define)
+						if err != nil {
+							return nil, err
+						}
 					}
-					pipeline.Source = scmSource
+					pipeline.Source = &scmSource
 
 				case "jenkins.scm.impl.subversion.SubversionSCMSource":
 					svnSource := &SvnSource{}
@@ -521,11 +532,13 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 					if err != nil {
 						return nil, err
 					}
-					err = json.Unmarshal(jsonByte, &scmSource.Define)
-					if err != nil {
-						return nil, err
+					if string(jsonByte) != "{}" {
+						err = json.Unmarshal(jsonByte, &scmSource.Define)
+						if err != nil {
+							return nil, err
+						}
 					}
-					pipeline.Source = scmSource
+					pipeline.Source = &scmSource
 				}
 
 			}
@@ -580,6 +593,7 @@ func parseMultiBranchPipelineScm(config string) (*ScmInfo, error) {
 	return nil, nil
 
 }
+
 func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, error) {
 	doc := etree.NewDocument()
 	xmlString := `
@@ -718,10 +732,18 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 		svnSource.CreateAttr("class", "jenkins.scm.impl.subversion.SubversionSCMSource")
 		svnSource.CreateAttr("plugin", "subversion")
 		svnSource.CreateElement("id").SetText(idutils.GetUuid("svn-"))
-		svnSource.CreateElement("credentialsId").SetText(svnDefine.CredentialId)
-		svnSource.CreateElement("remoteBase").SetText(svnDefine.Remote)
-		svnSource.CreateElement("includes").SetText(svnDefine.Includes)
-		svnSource.CreateElement("excludes").SetText(svnDefine.Excludes)
+		if svnDefine.CredentialId != "" {
+			svnSource.CreateElement("credentialsId").SetText(svnDefine.CredentialId)
+		}
+		if svnDefine.Remote != "" {
+			svnSource.CreateElement("remoteBase").SetText(svnDefine.Remote)
+		}
+		if svnDefine.Includes != "" {
+			svnSource.CreateElement("includes").SetText(svnDefine.Includes)
+		}
+		if svnDefine.Excludes != "" {
+			svnSource.CreateElement("excludes").SetText(svnDefine.Excludes)
+		}
 
 	case "single_svn":
 		singleSvnDefine := &SingleSvnSource{}
@@ -741,8 +763,12 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 		scm.CreateAttr("plugin", "subversion")
 
 		location := scm.CreateElement("locations").CreateElement("hudson.scm.SubversionSCM_-ModuleLocation")
-		location.CreateElement("remote").SetText(singleSvnDefine.Remote)
-		location.CreateElement("credentialsId").SetText(singleSvnDefine.CredentialId)
+		if singleSvnDefine.Remote != "" {
+			location.CreateElement("remote").SetText(singleSvnDefine.Remote)
+		}
+		if singleSvnDefine.CredentialId != "" {
+			location.CreateElement("credentialsId").SetText(singleSvnDefine.CredentialId)
+		}
 		location.CreateElement("local").SetText(".")
 		location.CreateElement("depthOption").SetText("infinity")
 		location.CreateElement("ignoreExternalsOption").SetText("true")
