@@ -370,6 +370,7 @@ func Test_MultiBranchPipelineConfig_Source(t *testing.T) {
 		Url:              "https://github.com/kubesphere/devops",
 		CredentialId:     "git",
 		DiscoverBranches: true,
+		DiscoverTags:     true,
 	})
 	json.Unmarshal(jsonByte, &inputs[0].Source.Define)
 
@@ -384,6 +385,7 @@ func Test_MultiBranchPipelineConfig_Source(t *testing.T) {
 			Strategy: 1,
 			Trust:    1,
 		},
+		DiscoverTags: true,
 	})
 	json.Unmarshal(jsonByte, &inputs[1].Source.Define)
 
