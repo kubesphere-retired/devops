@@ -114,7 +114,7 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 		return
 	}
 
-	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin, ProjectMaintainer})
+	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -318,7 +318,7 @@ func (s *ProjectService) DeleteCredentialHandler(w rest.ResponseWriter, r *rest.
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin, ProjectMaintainer})
+	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -364,7 +364,7 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 		return
 	}
 
-	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin, ProjectMaintainer})
+	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -474,7 +474,7 @@ func (s *ProjectService) GetCredentialHandler(w rest.ResponseWriter, r *rest.Req
 	operator := userutils.GetUserNameFromRequest(r)
 	credentialId := r.PathParams["cid"]
 	domain := r.URL.Query().Get("domain")
-	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin, ProjectMaintainer})
+	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -509,7 +509,7 @@ func (s *ProjectService) GetCredentialsHandler(w rest.ResponseWriter, r *rest.Re
 	projectId := r.PathParams["id"]
 	operator := userutils.GetUserNameFromRequest(r)
 	domain := r.URL.Query().Get("domain")
-	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin, ProjectMaintainer})
+	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
