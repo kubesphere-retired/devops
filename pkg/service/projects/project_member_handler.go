@@ -61,7 +61,7 @@ func (s *ProjectService) GetMembersHandler(w rest.ResponseWriter, r *rest.Reques
 		ProjectOwner, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
 	if err != nil {
 		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	memberships := make([]*models.ProjectMembership, 0)
@@ -86,7 +86,7 @@ func (s *ProjectService) GetMemberHandler(w rest.ResponseWriter, r *rest.Request
 		ProjectOwner, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
 	if err != nil {
 		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	memberships := &models.ProjectMembership{}
