@@ -55,7 +55,7 @@ func (s *ProjectService) GetProjectHandler(w rest.ResponseWriter, r *rest.Reques
 	projectId := r.PathParams["id"]
 	operator := userutils.GetUserNameFromRequest(r)
 	err := s.checkProjectUserInRole(operator, projectId,
-		[]string{ProjectOwner, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
+		[]string{ProjectAdmin, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -187,7 +187,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		return
 	}
 
-	projectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(project.ProjectId, ProjectOwner))
+	projectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(project.ProjectId, ProjectAdmin))
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
@@ -200,7 +200,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		return
 	}
 
-	pipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(project.ProjectId, ProjectOwner))
+	pipelineRole, err := s.Ds.Jenkins.GetProjectRole(GetPipelineRoleName(project.ProjectId, ProjectAdmin))
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
@@ -220,7 +220,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		return
 	}
 
-	projectMembership := models.NewProjectMemberShip(creator, project.ProjectId, ProjectOwner, creator)
+	projectMembership := models.NewProjectMemberShip(creator, project.ProjectId, ProjectAdmin, creator)
 	_, err = s.Ds.Db.InsertInto(models.ProjectMembershipTableName).
 		Columns(models.ProjectMembershipColumns...).Record(projectMembership).Exec()
 	if err != nil {
@@ -235,7 +235,7 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 func (s *ProjectService) DeleteProjectHandler(w rest.ResponseWriter, r *rest.Request) {
 	projectId := r.PathParams["id"]
 	operator := userutils.GetUserNameFromRequest(r)
-	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
+	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -297,7 +297,7 @@ func (s *ProjectService) UpdateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
+	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)

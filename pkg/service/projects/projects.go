@@ -29,15 +29,15 @@ type ProjectService struct {
 }
 
 const (
-	ProjectOwner      = "owner"
+	ProjectAdmin      = "admin"
 	ProjectMaintainer = "maintainer"
 	ProjectDeveloper  = "developer"
 	ProjectReporter   = "reporter"
 )
 
-var AllRoleSlice = []string{ProjectDeveloper, ProjectReporter, ProjectMaintainer, ProjectOwner}
+var AllRoleSlice = []string{ProjectDeveloper, ProjectReporter, ProjectMaintainer, ProjectAdmin}
 
-var JenkinsOwnerProjectPermissionIds = &gojenkins.ProjectPermissionIds{
+var JenkinsAdminProjectPermissionIds = &gojenkins.ProjectPermissionIds{
 	CredentialCreate:        true,
 	CredentialDelete:        true,
 	CredentialManageDomains: true,
@@ -59,7 +59,7 @@ var JenkinsOwnerProjectPermissionIds = &gojenkins.ProjectPermissionIds{
 }
 
 var JenkinsProjectPermissionMap = map[string]gojenkins.ProjectPermissionIds{
-	ProjectOwner: gojenkins.ProjectPermissionIds{
+	ProjectAdmin: gojenkins.ProjectPermissionIds{
 		CredentialCreate:        true,
 		CredentialDelete:        true,
 		CredentialManageDomains: true,
@@ -142,7 +142,7 @@ var JenkinsProjectPermissionMap = map[string]gojenkins.ProjectPermissionIds{
 }
 
 var JenkinsPipelinePermissionMap = map[string]gojenkins.ProjectPermissionIds{
-	ProjectOwner: gojenkins.ProjectPermissionIds{
+	ProjectAdmin: gojenkins.ProjectPermissionIds{
 		CredentialCreate:        true,
 		CredentialDelete:        true,
 		CredentialManageDomains: true,

@@ -39,7 +39,7 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		return
 	}
 
-	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
+	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin, ProjectMaintainer})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -136,7 +136,7 @@ func (s *ProjectService) DeletePipelineHandler(w rest.ResponseWriter, r *rest.Re
 	projectId := r.PathParams["id"]
 	operator := userutils.GetUserNameFromRequest(r)
 	pipelineId := r.PathParams["pid"]
-	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
+	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin, ProjectMaintainer})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -166,7 +166,7 @@ func (s *ProjectService) UpdatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 		return
 	}
 
-	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
+	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin, ProjectMaintainer})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -247,7 +247,7 @@ func (s *ProjectService) GetPipelineHandler(w rest.ResponseWriter, r *rest.Reque
 	projectId := r.PathParams["id"]
 	pipelineId := r.PathParams["pid"]
 	operator := userutils.GetUserNameFromRequest(r)
-	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner, ProjectMaintainer})
+	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin, ProjectMaintainer})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
