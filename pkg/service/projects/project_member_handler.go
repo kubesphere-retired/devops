@@ -37,7 +37,7 @@ type Role struct {
 
 var DefaultRoles = []*Role{
 	{
-		Name:        ProjectAdmin,
+		Name:        ProjectOwner,
 		Description: "项目的所有者，可以进行项目的所有操作",
 	},
 	{
@@ -58,7 +58,7 @@ func (s *ProjectService) GetMembersHandler(w rest.ResponseWriter, r *rest.Reques
 	projectId := r.PathParams["id"]
 	operator := userutils.GetUserNameFromRequest(r)
 	err := s.checkProjectUserInRole(operator, projectId, []string{
-		ProjectAdmin, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
+		ProjectOwner, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -83,7 +83,7 @@ func (s *ProjectService) GetMemberHandler(w rest.ResponseWriter, r *rest.Request
 	operator := userutils.GetUserNameFromRequest(r)
 	username := r.PathParams["uid"]
 	err := s.checkProjectUserInRole(operator, projectId, []string{
-		ProjectAdmin, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
+		ProjectOwner, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -128,7 +128,7 @@ func (s *ProjectService) AddProjectMemberHandler(w rest.ResponseWriter, r *rest.
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin})
+	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -234,7 +234,7 @@ func (s *ProjectService) UpdateMemberHandler(w rest.ResponseWriter, r *rest.Requ
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin})
+	err = s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -337,7 +337,7 @@ func (s *ProjectService) DeleteMemberHandler(w rest.ResponseWriter, r *rest.Requ
 	username := r.PathParams["uid"]
 	operator := userutils.GetUserNameFromRequest(r)
 
-	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectAdmin})
+	err := s.checkProjectUserInRole(operator, projectId, []string{ProjectOwner})
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusForbidden)
@@ -363,12 +363,12 @@ func (s *ProjectService) DeleteMemberHandler(w rest.ResponseWriter, r *rest.Requ
 		}{Username: username})
 		return
 	}
-	if oldMembership.Role == ProjectAdmin {
+	if oldMembership.Role == ProjectOwner {
 		count, err := s.Ds.Db.Select(models.ProjectIdColumn).
 			From(models.ProjectMembershipTableName).
 			Where(db.And(
 				db.Eq(models.ProjectIdColumn, projectId),
-				db.Eq(models.ProjectMembershipRoleColumn, ProjectAdmin))).Count()
+				db.Eq(models.ProjectMembershipRoleColumn, ProjectOwner))).Count()
 		if err != nil {
 			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
