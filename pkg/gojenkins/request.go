@@ -270,6 +270,7 @@ func (r *Requester) DoPostForm(ar *APIRequest, responseStruct interface{}, form 
 	if r.BasicAuth != nil {
 		req.SetBasicAuth(r.BasicAuth.Username, r.BasicAuth.Password)
 	}
+	req.Close = true
 	req.Header.Add("Accept", "*")
 	for k := range ar.Headers {
 		req.Header.Add(k, ar.Headers.Get(k))
