@@ -14,6 +14,8 @@ limitations under the License.
 package ds
 
 import (
+	"strconv"
+
 	"kubesphere.io/devops/pkg/config"
 	"kubesphere.io/devops/pkg/constants"
 	"kubesphere.io/devops/pkg/db"
@@ -45,8 +47,12 @@ func (p *Ds) openDatabase() *Ds {
 }
 
 func (p *Ds) connectJenkins() {
-	jenkins := gojenkins.CreateJenkins(nil, p.cfg.Jenkins.Address, p.cfg.Jenkins.User, p.cfg.Jenkins.Password)
-	jenkins, err := jenkins.Init()
+	maxConnection, err := strconv.Atoi(p.cfg.Jenkins.MaxConn)
+	if err != nil {
+		panic(err)
+	}
+	jenkins := gojenkins.CreateJenkins(nil, p.cfg.Jenkins.Address, maxConnection, p.cfg.Jenkins.User, p.cfg.Jenkins.Password)
+	jenkins, err = jenkins.Init()
 	if err != nil {
 		logger.Critical("failed to connect jenkins")
 		panic(err)
