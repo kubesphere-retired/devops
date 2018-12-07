@@ -19,7 +19,7 @@ spec:
       - image: kubesphere/devops:latest
         imagePullPolicy: Always
         name: devops
-        livenessProbe:
+        readinessProbe:
           httpGet:
             path: /healthz
             port: 8080
