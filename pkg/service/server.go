@@ -23,11 +23,13 @@ import (
 	"kubesphere.io/devops/pkg/ds"
 	"kubesphere.io/devops/pkg/logger"
 	"kubesphere.io/devops/pkg/service/projects"
+	"kubesphere.io/devops/pkg/service/system"
 )
 
 type Server struct {
 	Ds       *ds.Ds
 	Projects *projects.ProjectService
+	System   *system.SystemService
 }
 
 const APIVersion = "/api/v1alpha"
@@ -37,6 +39,7 @@ func Serve(cfg *config.Config) {
 	s := Server{}
 	s.Ds = ds.NewDs(cfg)
 	s.Projects = &projects.ProjectService{Ds: s.Ds}
+	s.System = &system.SystemService{Ds: s.Ds}
 
 	// func to connect jenkins solve https://issues.jenkins-ci.org/browse/JENKINS-2489
 	go func() {

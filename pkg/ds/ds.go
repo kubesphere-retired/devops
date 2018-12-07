@@ -17,7 +17,6 @@ import (
 	"strconv"
 
 	"kubesphere.io/devops/pkg/config"
-	"kubesphere.io/devops/pkg/constants"
 	"kubesphere.io/devops/pkg/db"
 	"kubesphere.io/devops/pkg/gojenkins"
 	"kubesphere.io/devops/pkg/logger"
@@ -58,19 +57,5 @@ func (p *Ds) connectJenkins() {
 		panic(err)
 	}
 	p.Jenkins = jenkins
-	globalRole, err := jenkins.GetGlobalRole(constants.JenkinsAllUserRoleName)
-	if err != nil {
-		logger.Critical("failed to get jenkins role")
-		panic(err)
-	}
-	if globalRole == nil {
-		_, err := jenkins.AddGlobalRole(constants.JenkinsAllUserRoleName, gojenkins.GlobalPermissionIds{
-			GlobalRead: true,
-		}, true)
-		if err != nil {
-			logger.Critical("failed to create jenkins global role")
-			panic(err)
-		}
-	}
 
 }

@@ -22,6 +22,7 @@ import (
 func Router(s *Server) (app rest.App) {
 
 	app, err := rest.MakeRouter(
+		rest.Get("/health-check", s.System.HealthCheck),
 		rest.Get("/projects", s.Projects.GetProjectsHandler),
 		rest.Get("/projects/:id", s.Projects.GetProjectHandler),
 		rest.Post("/projects", s.Projects.CreateProjectHandler),
@@ -43,6 +44,7 @@ func Router(s *Server) (app rest.App) {
 		rest.Delete("/projects/:id/pipelines/:pid", s.Projects.DeletePipelineHandler),
 		rest.Get("/projects/:id/pipelines/:pid/scm", s.Projects.GetPipelineScmHandler),
 		rest.Get("/projects/default_roles/", s.Projects.GetProjectDefaultRolesHandler))
+
 	if err != nil {
 		logger.Critical("%+v", err)
 		return
