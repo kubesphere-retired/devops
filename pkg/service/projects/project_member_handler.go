@@ -22,6 +22,7 @@ import (
 
 	"kubesphere.io/devops/pkg/constants"
 	"kubesphere.io/devops/pkg/db"
+	"kubesphere.io/devops/pkg/gojenkins"
 	"kubesphere.io/devops/pkg/logger"
 	"kubesphere.io/devops/pkg/models"
 	"kubesphere.io/devops/pkg/utils/reflectutils"
@@ -60,7 +61,7 @@ func (s *ProjectService) GetMembersHandler(w rest.ResponseWriter, r *rest.Reques
 		ProjectOwner, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
 	if err != nil {
 		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	memberships := make([]*models.ProjectMembership, 0)
@@ -85,7 +86,7 @@ func (s *ProjectService) GetMemberHandler(w rest.ResponseWriter, r *rest.Request
 		ProjectOwner, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
 	if err != nil {
 		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	memberships := &models.ProjectMembership{}
@@ -133,11 +134,38 @@ func (s *ProjectService) AddProjectMemberHandler(w rest.ResponseWriter, r *rest.
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
+	membership := &models.ProjectMembership{}
+	err = s.Ds.Db.Select(models.ProjectMembershipColumns...).
+		From(models.ProjectMembershipTableName).
+		Where(db.And(
+			db.Eq(models.ProjectMembershipUsernameColumn, request.Username),
+			db.Eq(models.ProjectMembershipProjectIdColumn, projectId))).LoadOne(membership)
+	if err != nil && err != db.ErrNotFound {
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err != db.ErrNotFound {
+		err = fmt.Errorf("user [%s] have been added to project", request.Username)
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	globalRole, err := s.Ds.Jenkins.GetGlobalRole(constants.JenkinsAllUserRoleName)
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
+	}
+	if globalRole == nil {
+		_, err := s.Ds.Jenkins.AddGlobalRole(constants.JenkinsAllUserRoleName, gojenkins.GlobalPermissionIds{
+			GlobalRead: true,
+		}, true)
+		if err != nil {
+			logger.Critical("failed to create jenkins global role")
+			panic(err)
+		}
 	}
 	err = globalRole.AssignRole(request.Username)
 	if err != nil {
@@ -190,6 +218,12 @@ func (s *ProjectService) UpdateMemberHandler(w rest.ResponseWriter, r *rest.Requ
 	request := &UpdateProjectMemberRequest{}
 	err := r.DecodeJsonPayload(request)
 	if err != nil {
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if username == operator {
+		err := fmt.Errorf("you can not change your role")
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -317,10 +351,35 @@ func (s *ProjectService) DeleteMemberHandler(w rest.ResponseWriter, r *rest.Requ
 			db.Eq(models.ProjectMembershipUsernameColumn, username),
 			db.Eq(models.ProjectMembershipProjectIdColumn, projectId),
 		)).LoadOne(oldMembership)
-	if err != nil {
+	if err != nil && err != db.ErrNotFound {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	if err == db.ErrNotFound {
+		logger.Warn("user [%s] not found in project", username)
+		w.WriteJson(struct {
+			Username string `json:"username"`
+		}{Username: username})
+		return
+	}
+	if oldMembership.Role == ProjectOwner {
+		count, err := s.Ds.Db.Select(models.ProjectIdColumn).
+			From(models.ProjectMembershipTableName).
+			Where(db.And(
+				db.Eq(models.ProjectIdColumn, projectId),
+				db.Eq(models.ProjectMembershipRoleColumn, ProjectOwner))).Count()
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if count == 1 {
+			err = fmt.Errorf("project must has at least one admin")
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 
 	oldProjectRole, err := s.Ds.Jenkins.GetProjectRole(GetProjectRoleName(projectId, oldMembership.Role))

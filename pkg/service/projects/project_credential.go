@@ -19,9 +19,10 @@ import (
 )
 
 var CredentialTypeMap = map[string]string{
-	"SSH Username with private key": CredentialTypeSsh,
-	"Username with password":        CredentialTypeUsernamePassword,
-	"Secret text":                   CredentialTypeSecretText,
+	"SSH Username with private key":         CredentialTypeSsh,
+	"Username with password":                CredentialTypeUsernamePassword,
+	"Secret text":                           CredentialTypeSecretText,
+	"Kubernetes configuration (kubeconfig)": CredentialTypeKubeConfig,
 }
 
 func formatCredentialResponse(

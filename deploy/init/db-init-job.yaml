@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
       labels:
-        app: devops
+        app: ks-devops-apiserver
         job: ks-devops-db-init
         version: latest
       name: ks-devops-db-init

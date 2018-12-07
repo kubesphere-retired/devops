@@ -634,6 +634,32 @@ func (j *Jenkins) CreateSecretTextCredentialInFolder(domain, id, secret, descrip
 	return &requestStruct.Credentials.Id, nil
 }
 
+func (j *Jenkins) CreateKubeconfigCredentialInFolder(domain, id, content, description string, folders ...string) (*string, error) {
+	requestStruct := NewCreateKubeconfigCredentialRequest(id, content, description)
+	param := map[string]string{"json": makeJson(requestStruct)}
+	responseString := ""
+	prePath := ""
+	if domain == "" {
+		domain = "_"
+	}
+	if len(folders) == 0 {
+		return nil, fmt.Errorf("folder name shoud not be nil")
+	}
+	for _, folder := range folders {
+		prePath = prePath + fmt.Sprintf("/job/%s", folder)
+	}
+	response, err := j.Requester.Post(prePath+
+		fmt.Sprintf("/credentials/store/folder/domain/%s/createCredentials", domain),
+		nil, &responseString, param)
+	if err != nil {
+		return nil, err
+	}
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(strconv.Itoa(response.StatusCode))
+	}
+	return &requestStruct.Credentials.Id, nil
+}
+
 func (j *Jenkins) UpdateSshCredentialInFolder(domain, id, username, passphrase, privateKey, description string, folders ...string) (*string, error) {
 	requestStruct := NewSshCredential(id, username, passphrase, privateKey, description)
 	param := map[string]string{"json": makeJson(requestStruct)}
@@ -686,6 +712,31 @@ func (j *Jenkins) UpdateUsernamePasswordCredentialInFolder(domain, id, username,
 
 func (j *Jenkins) UpdateSecretTextCredentialInFolder(domain, id, secret, description string, folders ...string) (*string, error) {
 	requestStruct := NewSecretTextCredential(id, secret, description)
+	param := map[string]string{"json": makeJson(requestStruct)}
+	prePath := ""
+	if domain == "" {
+		domain = "_"
+	}
+	if len(folders) == 0 {
+		return nil, fmt.Errorf("folder name shoud not be nil")
+	}
+	for _, folder := range folders {
+		prePath = prePath + fmt.Sprintf("/job/%s", folder)
+	}
+	response, err := j.Requester.Post(prePath+
+		fmt.Sprintf("/credentials/store/folder/domain/%s/credential/%s/updateSubmit", domain, id),
+		nil, nil, param)
+	if err != nil {
+		return nil, err
+	}
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(strconv.Itoa(response.StatusCode))
+	}
+	return &id, nil
+}
+
+func (j *Jenkins) UpdateKubeconfigCredentialInFolder(domain, id, content, description string, folders ...string) (*string, error) {
+	requestStruct := NewKubeconfigCredential(id, content, description)
 	param := map[string]string{"json": makeJson(requestStruct)}
 	prePath := ""
 	if domain == "" {
@@ -975,13 +1026,13 @@ func (j *Jenkins) GetQueueItem(number int64) (*QueueItemResponse, error) {
 // Creates a new Jenkins Instance
 // Optional parameters are: client, username, password
 // After creating an instance call init method.
-func CreateJenkins(client *http.Client, base string, auth ...interface{}) *Jenkins {
+func CreateJenkins(client *http.Client, base string, maxConnection int, auth ...interface{}) *Jenkins {
 	j := &Jenkins{}
 	if strings.HasSuffix(base, "/") {
 		base = base[:len(base)-1]
 	}
 	j.Server = base
-	j.Requester = &Requester{Base: base, SslVerify: true, Client: client}
+	j.Requester = &Requester{Base: base, SslVerify: true, Client: client, connControl: make(chan struct{}, maxConnection)}
 	if j.Requester.Client == nil {
 		j.Requester.Client = http.DefaultClient
 	}
