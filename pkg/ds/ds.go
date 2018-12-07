@@ -27,12 +27,14 @@ type Ds struct {
 	cfg     *config.Config
 	Db      *db.Database
 	Jenkins *gojenkins.Jenkins
+	Health  bool
 }
 
 func NewDs(cfg *config.Config) *Ds {
 	s := &Ds{cfg: cfg}
 	s.openDatabase()
 	s.connectJenkins()
+	s.Health = true
 	return s
 }
 

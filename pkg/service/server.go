@@ -50,5 +50,13 @@ func Serve(cfg *config.Config) {
 	api.Use(rest.DefaultDevStack...)
 	api.SetApp(Router(&s))
 	http.Handle(APIVersion+"/", http.StripPrefix(APIVersion, api.MakeHandler()))
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		if s.Ds.Health {
+			w.Write([]byte("OK"))
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Bad"))
+		}
+	})
 	logger.Critical("%+v", http.ListenAndServe(":8080", nil))
 }

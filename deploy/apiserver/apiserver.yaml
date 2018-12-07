@@ -19,6 +19,15 @@ spec:
       - image: kubesphere/devops:latest
         imagePullPolicy: Always
         name: devops
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+            httpHeaders:
+            - name: X-Custom-Header
+              value: Awesome
+          initialDelaySeconds: 3
+          periodSeconds: 3
         env:
         - name: DEVOPSPHERE_MYSQL_USERNAME
           value: "root"
