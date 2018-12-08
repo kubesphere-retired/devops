@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/beevik/etree"
 	"github.com/mitchellh/mapstructure"
@@ -640,7 +641,11 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 		timeTrigger := triggers.CreateElement(
 			"com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger")
 		timeTrigger.CreateAttr("plugin", "cloudbees-folder")
-		timeTrigger.CreateElement("spec")
+		millis, err := strconv.ParseInt(pipeline.TimerTrigger.Interval, 10, 64)
+		if err != nil {
+			return "", err
+		}
+		timeTrigger.CreateElement("spec").SetText(toCrontab(millis))
 		timeTrigger.CreateElement("interval").SetText(pipeline.TimerTrigger.Interval)
 
 		triggers.CreateElement("disabled").SetText("false")
@@ -805,4 +810,27 @@ func replaceXmlVersion(config, oldVersion, targetVersion string) string {
 	lines[0] = strings.Replace(lines[0], oldVersion, targetVersion, -1)
 	output := strings.Join(lines, "\n")
 	return output
+}
+
+func toCrontab(millis int64) string {
+	if millis*time.Millisecond.Nanoseconds() <= 5*time.Minute.Nanoseconds() {
+		return "* * * * *"
+	}
+	if millis*time.Millisecond.Nanoseconds() <= 30*time.Minute.Nanoseconds() {
+		return "H/5 * * * *"
+	}
+	if millis*time.Millisecond.Nanoseconds() <= 1*time.Hour.Nanoseconds() {
+		return "H/15 * * * *"
+	}
+	if millis*time.Millisecond.Nanoseconds() <= 8*time.Hour.Nanoseconds() {
+		return "H/30 * * * *"
+	}
+	if millis*time.Millisecond.Nanoseconds() <= 24*time.Hour.Nanoseconds() {
+		return "H H/4 * * *"
+	}
+	if millis*time.Millisecond.Nanoseconds() <= 48*time.Hour.Nanoseconds() {
+		return "H H/12 * * *"
+	}
+	return "H H * * *"
+
 }
