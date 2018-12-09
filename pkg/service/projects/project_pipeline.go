@@ -593,7 +593,7 @@ func parseMultiBranchPipelineScm(config string) (*ScmInfo, error) {
 
 }
 
-func createMultiBranchPipelineConfigXml(pipelineName string, pipeline *MultiBranchPipeline) (string, error) {
+func createMultiBranchPipelineConfigXml(projectName string, pipeline *MultiBranchPipeline) (string, error) {
 	doc := etree.NewDocument()
 	xmlString := `
 <?xml version='1.0' encoding='UTF-8'?>
@@ -672,7 +672,7 @@ func createMultiBranchPipelineConfigXml(pipelineName string, pipeline *MultiBran
 		gitSource := branchSource.CreateElement("source")
 		gitSource.CreateAttr("class", "jenkins.plugins.git.GitSCMSource")
 		gitSource.CreateAttr("plugin", "git")
-		gitSource.CreateElement("id").SetText(pipelineName)
+		gitSource.CreateElement("id").SetText(projectName + pipeline.Name)
 		gitSource.CreateElement("remote").SetText(gitDefine.Url)
 		if gitDefine.CredentialId != "" {
 			gitSource.CreateElement("credentialsId").SetText(gitDefine.CredentialId)
@@ -691,7 +691,7 @@ func createMultiBranchPipelineConfigXml(pipelineName string, pipeline *MultiBran
 		githubSource := branchSource.CreateElement("source")
 		githubSource.CreateAttr("class", "org.jenkinsci.plugins.github_branch_source.GitHubSCMSource")
 		githubSource.CreateAttr("plugin", "github-branch-source")
-		githubSource.CreateElement("id").SetText(pipelineName)
+		githubSource.CreateElement("id").SetText(projectName + pipeline.Name)
 		githubSource.CreateElement("credentialsId").SetText(githubDefine.CredentialId)
 		githubSource.CreateElement("repoOwner").SetText(githubDefine.Owner)
 		githubSource.CreateElement("repository").SetText(githubDefine.Repo)
@@ -734,7 +734,7 @@ func createMultiBranchPipelineConfigXml(pipelineName string, pipeline *MultiBran
 		svnSource := branchSource.CreateElement("source")
 		svnSource.CreateAttr("class", "jenkins.scm.impl.subversion.SubversionSCMSource")
 		svnSource.CreateAttr("plugin", "subversion")
-		svnSource.CreateElement("id").SetText(pipelineName)
+		svnSource.CreateElement("id").SetText(projectName + pipeline.Name)
 		if svnDefine.CredentialId != "" {
 			svnSource.CreateElement("credentialsId").SetText(svnDefine.CredentialId)
 		}
@@ -758,7 +758,7 @@ func createMultiBranchPipelineConfigXml(pipelineName string, pipeline *MultiBran
 		svnSource.CreateAttr("class", "jenkins.scm.impl.SingleSCMSource")
 		svnSource.CreateAttr("plugin", "scm-api")
 
-		svnSource.CreateElement("id").SetText(pipelineName)
+		svnSource.CreateElement("id").SetText(projectName + pipeline.Name)
 		svnSource.CreateElement("name").SetText("master")
 
 		scm := svnSource.CreateElement("scm")
