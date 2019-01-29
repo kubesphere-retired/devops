@@ -42,7 +42,7 @@ build-dev-image-%:
 	@if [ "$*" = "latest" ];then \
 	docker build -t kubespheredev/ks-devops:latest .; \
 	docker build -t kubespheredev/ks-devops:flyway -f ./pkg/db/Dockerfile ./pkg/db/;\
-	elif [ "`echo "$*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+"`" != "" ];then \
+	elif [ "`echo "$*" `" != "" ];then \
 	docker build -t kubespheredev/ks-devops:$* .; \
 	docker build -t kubespheredev/ks-devops:flyway-$* -f ./pkg/db/Dockerfile ./pkg/db/; \
 	fi
@@ -51,7 +51,7 @@ push-dev-image-%:
 	@if [ "$*" = "latest" ];then \
 	docker push kubespheredev/ks-devops:latest; \
 	docker push kubespheredev/ks-devops:flyway; \
-	elif [ "`echo "$*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+"`" != "" ];then \
+	elif [ "`echo "$*" `" != "" ];then \
 	docker push kubespheredev/ks-devops:$*; \
 	docker push kubespheredev/ks-devops:flyway-$*; \
 	fi
