@@ -37,3 +37,21 @@ push-image-%: ## push docker image
 	docker push kubesphere/devops:$*; \
 	docker push kubesphere/devops:flyway-$*; \
 	fi
+
+build-dev-image-%:
+	@if [ "$*" = "latest" ];then \
+	docker build -t kubespheredev/devops:latest .; \
+	docker build -t kubespheredev/devops:flyway -f ./pkg/db/Dockerfile ./pkg/db/;\
+	elif [ "`echo "$*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+"`" != "" ];then \
+	docker build -t kubespheredev/devops:$* .; \
+	docker build -t kubespheredev/devops:flyway-$* -f ./pkg/db/Dockerfile ./pkg/db/; \
+	fi
+
+push-dev-image-%:
+	@if [ "$*" = "latest" ];then \
+	docker push kubespheredev/devops:latest; \
+	docker push kubespheredev/devops:flyway; \
+	elif [ "`echo "$*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+"`" != "" ];then \
+	docker push kubespheredev/devops:$*; \
+	docker push kubespheredev/devops:flyway-$*; \
+	fi
