@@ -23,10 +23,10 @@ script:
 
 deploy:
   - provider: script
-    script: bash hack/docker_push.sh latest
+    script: bash hack/docker_push.sh advanced-1.0.2-dev
     on:
-      branch: master
-      repo: kubesphere/devops
+      branch: advanced-1.0
+      repo: kubespheredev/devops
   - provider: script
     script: bash hack/docker_push.sh $TRAVIS_TAG
     on:
