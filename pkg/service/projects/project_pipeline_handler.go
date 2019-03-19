@@ -93,7 +93,7 @@ func (s *ProjectService) CreatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		config, err := createMultiBranchPipelineConfigXml(pipeline)
+		config, err := createMultiBranchPipelineConfigXml(projectId, pipeline)
 		if err != nil {
 			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)
@@ -212,7 +212,7 @@ func (s *ProjectService) UpdatePipelineHandler(w rest.ResponseWriter, r *rest.Re
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		config, err := createMultiBranchPipelineConfigXml(multiBranchPipeline)
+		config, err := createMultiBranchPipelineConfigXml(projectId, multiBranchPipeline)
 		if err != nil {
 			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusInternalServerError)

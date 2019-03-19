@@ -44,6 +44,7 @@ type JenkinsConfig struct {
 	Address  string `default:"http://jenkins.kubesphere.com/"`
 	User     string `default:"magicsong"`
 	Password string `default:"devops"`
+	MaxConn  string `default:"20"`
 }
 
 func (m *MysqlConfig) GetUrl() string {
