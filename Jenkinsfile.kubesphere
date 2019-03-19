@@ -6,13 +6,15 @@ pipeline {
   }
   stages {
     stage('sonarqube analysis'){
-      script {
-        scannerHome = tool 'sonar';
-      }
-      withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-          withSonarQubeEnv('sonar') {
-             sh "${scannerHome}/bin/sonar-scanner -Dsonar.branch=$BRANCH_NAME -Dsonar.projectKey=ks-devops -Dsonar.sources=.  -Dsonar.login=$SONAR_TOKEN"
-          }
+      steps{
+        script {
+          scannerHome = tool 'sonar';
+        }
+        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+            withSonarQubeEnv('sonar') {
+               sh "${scannerHome}/bin/sonar-scanner -Dsonar.branch=$BRANCH_NAME -Dsonar.projectKey=ks-devops -Dsonar.sources=.  -Dsonar.login=$SONAR_TOKEN"
+            }
+        }
       }
     }
   }
