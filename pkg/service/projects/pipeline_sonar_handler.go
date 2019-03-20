@@ -2,14 +2,16 @@ package projects
 
 import (
 	"fmt"
+	"net/http"
+	"net/url"
+
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/kubesphere/sonargo/sonar"
+
 	"kubesphere.io/devops/pkg/gojenkins"
 	"kubesphere.io/devops/pkg/logger"
 	"kubesphere.io/devops/pkg/utils/stringutils"
 	"kubesphere.io/devops/pkg/utils/userutils"
-	"net/http"
-	"net/url"
 )
 
 const (
@@ -145,5 +147,5 @@ func (s *ProjectService) getBuildSonarResults(build *gojenkins.Build) ([]*SonarS
 			sonarStatuses = append(sonarStatuses, sonarStatus)
 		}
 	}
-	return sonarStatuses,nil
+	return sonarStatuses, nil
 }
