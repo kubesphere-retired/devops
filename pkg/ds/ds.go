@@ -15,8 +15,9 @@ package ds
 
 import (
 	"strconv"
+	"strings"
 
-	"github.com/magicsong/sonargo/sonar"
+	"github.com/kubesphere/sonargo/sonar"
 
 	"kubesphere.io/devops/pkg/config"
 	"kubesphere.io/devops/pkg/constants"
@@ -84,7 +85,10 @@ func (p *Ds) connectSonar() {
 		logger.Info("skip sonar init")
 		return
 	}
-	client, err := sonargo.NewClient(p.cfg.Sonar.Address+"api/", p.cfg.Sonar.Token, "")
+	if !strings.HasSuffix(p.cfg.Sonar.Address, "/") {
+		p.cfg.Sonar.Address += "/"
+	}
+	client, err := sonargo.NewClientWithToken(p.cfg.Sonar.Address+"api/", p.cfg.Sonar.Token)
 	if err != nil {
 		logger.Critical("failed to connect to sonar")
 		panic(err)

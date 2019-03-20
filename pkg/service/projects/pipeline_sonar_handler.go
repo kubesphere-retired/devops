@@ -3,7 +3,7 @@ package projects
 import (
 	"fmt"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/magicsong/sonargo/sonar"
+	"github.com/kubesphere/sonargo/sonar"
 	"kubesphere.io/devops/pkg/gojenkins"
 	"kubesphere.io/devops/pkg/logger"
 	"kubesphere.io/devops/pkg/utils/stringutils"
