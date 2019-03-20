@@ -50,8 +50,8 @@ type JenkinsConfig struct {
 }
 
 type SonarConfig struct {
-	Address   string `default:""`
-	Token string `default:""`
+	Address string `default:""`
+	Token   string `default:""`
 }
 
 func (m *MysqlConfig) GetUrl() string {

@@ -17,7 +17,7 @@ import (
 	"strconv"
 
 	"github.com/magicsong/sonargo/sonar"
-	
+
 	"kubesphere.io/devops/pkg/config"
 	"kubesphere.io/devops/pkg/constants"
 	"kubesphere.io/devops/pkg/db"

@@ -69,6 +69,9 @@ type generalObj struct {
 	MercurialNodeName       string                   `json:"mercurialNodeName"`
 	MercurialRevisionNumber string                   `json:"mercurialRevisionNumber"`
 	Subdir                  interface{}              `json:"subdir"`
+	ClassName               string                   `json:"_class"`
+	SonarTaskId             string                   `json:"ceTaskId"`
+	SonarServerUrl          string                   `json:"serverUrl"`
 	TotalCount              int64
 	UrlName                 string
 }
