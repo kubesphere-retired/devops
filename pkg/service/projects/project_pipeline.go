@@ -72,6 +72,7 @@ type GitSource struct {
 	Url              string `json:"url,omitempty" mapstructure:"url"`
 	CredentialId     string `json:"credential_id,omitempty" mapstructure:"credential_id"`
 	DiscoverBranches bool   `json:"discover_branches,omitempty" mapstructure:"discover_branches"`
+	DiscoverTags     bool   `json:"discover_tags,omitempty" mapstructure:"discover_tags"`
 }
 
 type GithubSource struct {
@@ -82,6 +83,7 @@ type GithubSource struct {
 	DiscoverBranches     int                        `json:"discover_branches,omitempty" mapstructure:"discover_branches"`
 	DiscoverPRFromOrigin int                        `json:"discover_pr_from_origin,omitempty" mapstructure:"discover_pr_from_origin"`
 	DiscoverPRFromForks  *GithubDiscoverPRFromForks `json:"discover_pr_from_forks,omitempty" mapstructure:"discover_pr_from_forks"`
+	DiscoverTags         bool                       `json:"discover_tags,omitempty" mapstructure:"discover_tags"`
 }
 
 type SvnSource struct {
@@ -430,7 +432,9 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 								Trust:    4,
 							}
 						}
-
+					}
+					if tagsDiscoverTrait := traits.SelectElement("org.jenkinsci.plugins.github__branch__source.TagDiscoveryTrait"); tagsDiscoverTrait != nil {
+						githubSource.DiscoverTags = true
 					}
 					scmSource := Source{
 						Type: "github",
@@ -460,6 +464,11 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 						"jenkins.plugins.git.traits.BranchDiscoveryTrait"); branchDiscoverTrait != nil {
 						gitSource.DiscoverBranches = true
 					}
+					if tagDiscoverTrait := traits.SelectElement(
+						"jenkins.plugins.git.traits.TagDiscoveryTrait"); tagDiscoverTrait != nil {
+						gitSource.DiscoverTags = true
+					}
+
 					scmSource := Source{
 						Type: "git",
 					}
@@ -681,6 +690,9 @@ func createMultiBranchPipelineConfigXml(projectName string, pipeline *MultiBranc
 		if gitDefine.DiscoverBranches {
 			traits.CreateElement("jenkins.plugins.git.traits.BranchDiscoveryTrait")
 		}
+		if gitDefine.DiscoverTags {
+			traits.CreateElement("jenkins.plugins.git.traits.TagDiscoveryTrait")
+		}
 
 	case "github":
 		githubDefine := &GithubSource{}
@@ -724,6 +736,9 @@ func createMultiBranchPipelineConfigXml(projectName string, pipeline *MultiBranc
 				return "", fmt.Errorf("unsupport trust choice")
 			}
 			forkTrait.CreateElement("trust").CreateAttr("class", trustClass)
+		}
+		if githubDefine.DiscoverTags == true {
+			traits.CreateElement("org.jenkinsci.plugins.github__branch__source.TagDiscoveryTrait")
 		}
 	case "svn":
 		svnDefine := &SvnSource{}
