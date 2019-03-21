@@ -35,7 +35,7 @@ type Ds struct {
 
 func NewDs(cfg *config.Config) *Ds {
 	s := &Ds{cfg: cfg}
-	//s.openDatabase()
+	s.openDatabase()
 	s.connectJenkins()
 	s.connectSonar()
 	return s
