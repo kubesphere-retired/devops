@@ -43,7 +43,8 @@ func Router(s *Server) (app rest.App) {
 		rest.Delete("/projects/:id/pipelines/:pid", s.Projects.DeletePipelineHandler),
 		rest.Get("/projects/:id/pipelines/:pid/scm", s.Projects.GetPipelineScmHandler),
 		rest.Get("/projects/default_roles/", s.Projects.GetProjectDefaultRolesHandler),
-		rest.Get("/projects/:id/pipelines/:pid/sonarStatus", s.Projects.GetPipelineSonarHandler))
+		rest.Get("/projects/:id/pipelines/:pid/sonarStatus", s.Projects.GetPipelineSonarHandler),
+		rest.Get("/projects/:id/pipelines/:pid/branches/:bid/sonarStatus", s.Projects.GetMultiBranchPipelineSonarHandler))
 
 	if err != nil {
 		logger.Critical("%+v", err)

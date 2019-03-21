@@ -38,13 +38,13 @@ type parameter struct {
 }
 
 type branch struct {
-	SHA1 string
-	Name string
+	SHA1 string `json:",omitempty"`
+	Name string `json:",omitempty"`
 }
 
 type BuildRevision struct {
-	SHA1   string   `json:"SHA1"`
-	Branch []branch `json:"branch"`
+	SHA1   string   `json:"SHA1,omitempty"`
+	Branch []branch `json:"branch,omitempty"`
 }
 
 type Builds struct {
@@ -59,21 +59,22 @@ type Culprit struct {
 	FullName    string
 }
 
-type generalObj struct {
-	Parameters              []parameter              `json:"parameters"`
-	Causes                  []map[string]interface{} `json:"causes"`
-	BuildsByBranchName      map[string]Builds        `json:"buildsByBranchName"`
-	LastBuiltRevision       BuildRevision            `json:"lastBuiltRevision"`
-	RemoteUrls              []string                 `json:"remoteUrls"`
-	ScmName                 string                   `json:"scmName"`
-	MercurialNodeName       string                   `json:"mercurialNodeName"`
-	MercurialRevisionNumber string                   `json:"mercurialRevisionNumber"`
-	Subdir                  interface{}              `json:"subdir"`
-	ClassName               string                   `json:"_class"`
-	SonarTaskId             string                   `json:"ceTaskId"`
-	SonarServerUrl          string                   `json:"serverUrl"`
-	TotalCount              int64
-	UrlName                 string
+type GeneralObj struct {
+	Parameters              []parameter              `json:"parameters,omitempty"`
+	Causes                  []map[string]interface{} `json:"causes,omitempty"`
+	BuildsByBranchName      map[string]Builds        `json:"buildsByBranchName,omitempty"`
+	LastBuiltRevision       *BuildRevision           `json:"lastBuiltRevision,omitempty"`
+	RemoteUrls              []string                 `json:"remoteUrls,omitempty"`
+	ScmName                 string                   `json:"scmName,omitempty"`
+	MercurialNodeName       string                   `json:"mercurialNodeName,omitempty"`
+	MercurialRevisionNumber string                   `json:"mercurialRevisionNumber,omitempty"`
+	Subdir                  interface{}              `json:"subdir,omitempty"`
+	ClassName               string                   `json:"_class,omitempty"`
+	SonarTaskId             string                   `json:"ceTaskId,omitempty"`
+	SonarServerUrl          string                   `json:"serverUrl,omitempty"`
+	SonarDashboardUrl       string                   `json:"sonarqubeDashboardUrl,omitempty"`
+	TotalCount              int64                    `json:",omitempty"`
+	UrlName                 string                   `json:",omitempty"`
 }
 
 type TestResult struct {
@@ -107,7 +108,7 @@ type TestResult struct {
 }
 
 type BuildResponse struct {
-	Actions   []generalObj
+	Actions   []GeneralObj
 	Artifacts []struct {
 		DisplayPath  string `json:"displayPath"`
 		FileName     string `json:"fileName"`
@@ -166,7 +167,7 @@ func (b *Build) Info() *BuildResponse {
 	return b.Raw
 }
 
-func (b *Build) GetActions() []generalObj {
+func (b *Build) GetActions() []GeneralObj {
 	return b.Raw.Actions
 }
 

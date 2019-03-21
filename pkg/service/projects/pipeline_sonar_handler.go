@@ -1,9 +1,7 @@
 package projects
 
 import (
-	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/kubesphere/sonargo/sonar"
@@ -21,20 +19,22 @@ const (
 )
 
 type SonarStatus struct {
-	Measures *sonargo.MeasuresComponentObject `json:"measures,omitempty"`
-	Issues   *sonargo.IssuesSearchObject      `json:"issues,omitempty"`
+	Measures      *sonargo.MeasuresComponentObject `json:"measures,omitempty"`
+	Issues        *sonargo.IssuesSearchObject      `json:"issues,omitempty"`
+	JenkinsAction *gojenkins.GeneralObj            `json:"jenkinsAction,omitempty"`
+	Task          *sonargo.CeTaskObject            `json:"task,omitempty"`
 }
 
 func (s *ProjectService) GetPipelineSonarHandler(w rest.ResponseWriter, r *rest.Request) {
 	projectId := r.PathParams["id"]
 	pipelineId := r.PathParams["pid"]
-	//operator := userutils.GetUserNameFromRequest(r)
-	//err := s.checkProjectUserInRole(operator, projectId, AllRoleSlice)
-	//if err != nil {
-	//	logger.Error("%+v", err)
-	//	rest.Error(w, err.Error(), http.StatusForbidden)
-	//	return
-	//}
+	operator := userutils.GetUserNameFromRequest(r)
+	err := s.checkProjectUserInRole(operator, projectId, AllRoleSlice)
+	if err != nil {
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
 	job, err := s.Ds.Jenkins.GetJob(pipelineId, projectId)
 	if err != nil {
 		logger.Error("%+v", err)
@@ -62,6 +62,7 @@ func (s *ProjectService) GetPipelineSonarHandler(w rest.ResponseWriter, r *rest.
 func (s *ProjectService) GetMultiBranchPipelineSonarHandler(w rest.ResponseWriter, r *rest.Request) {
 	projectId := r.PathParams["id"]
 	pipelineId := r.PathParams["pid"]
+	branchName := r.PathParams["bid"]
 	operator := userutils.GetUserNameFromRequest(r)
 	err := s.checkProjectUserInRole(operator, projectId, AllRoleSlice)
 	if err != nil {
@@ -69,36 +70,26 @@ func (s *ProjectService) GetMultiBranchPipelineSonarHandler(w rest.ResponseWrite
 		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
-	job, err := s.Ds.Jenkins.GetJob(pipelineId, projectId)
+	job, err := s.Ds.Jenkins.GetJob(branchName, projectId, pipelineId)
 	if err != nil {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
-	switch job.Raw.Class {
-	case "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject":
-		config, err := job.GetConfig()
-		if err != nil {
-			logger.Error("%+v", err)
-			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-			return
-		}
-		scm, err := parseMultiBranchPipelineScm(config)
-		if err != nil {
-			logger.Error("%+v", err)
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.WriteJson(scm)
-		return
-
-	default:
-		err := fmt.Errorf("error unsupport job type")
+	build, err := job.GetLastBuild()
+	if err != nil {
 		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
 
+	sonarStatus, err := s.getBuildSonarResults(build)
+	if err != nil {
+		logger.Error("%+v", err)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteJson(sonarStatus)
 }
 
 func (s *ProjectService) getBuildSonarResults(build *gojenkins.Build) ([]*SonarStatus, error) {
@@ -107,14 +98,6 @@ func (s *ProjectService) getBuildSonarResults(build *gojenkins.Build) ([]*SonarS
 	for _, action := range actions {
 		if action.ClassName == SonarAnalysisActionClass {
 			sonarStatus := &SonarStatus{}
-			buildSonarUrl, err := url.Parse(action.SonarServerUrl)
-			if err != nil {
-				logger.Error("failed to parse SonarUrl [%+v]", err)
-				continue
-			}
-			if buildSonarUrl.Host != s.Ds.Sonar.BaseURL().Host {
-
-			}
 			taskOptions := &sonargo.CeTaskOption{
 				Id: action.SonarTaskId,
 			}
@@ -123,6 +106,7 @@ func (s *ProjectService) getBuildSonarResults(build *gojenkins.Build) ([]*SonarS
 				logger.Error("get sonar task error [%+v]", err)
 				continue
 			}
+			sonarStatus.Task = ceTask
 			measuresComponentOption := &sonargo.MeasuresComponentOption{
 				Component:        ceTask.Task.ComponentKey,
 				AdditionalFields: SonarAdditionalFields,
@@ -144,6 +128,9 @@ func (s *ProjectService) getBuildSonarResults(build *gojenkins.Build) ([]*SonarS
 			}
 			issuesSearch, _, err := s.Ds.Sonar.Issues.Search(issuesSearchOption)
 			sonarStatus.Issues = issuesSearch
+			jenkinsAction := action
+			sonarStatus.JenkinsAction = &jenkinsAction
+
 			sonarStatuses = append(sonarStatuses, sonarStatus)
 		}
 	}
