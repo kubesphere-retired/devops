@@ -415,3 +415,71 @@ func Test_MultiBranchPipelineConfig_Source(t *testing.T) {
 		}
 	}
 }
+
+func Test_MultiBranchPipelineCloneConfig(t *testing.T) {
+
+	inputs := []*MultiBranchPipeline{
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "git",
+			},
+		},
+		&MultiBranchPipeline{
+			Name:        "",
+			Description: "for test",
+			ScriptPath:  "Jenkinsfile",
+			Source: &Source{
+				Type: "github",
+			},
+		},
+	}
+	jsonByte, _ := json.Marshal(&GitSource{
+		Url:              "https://github.com/kubesphere/devops",
+		CredentialId:     "git",
+		DiscoverBranches: true,
+		CloneOption: &GitCloneOption{
+			Shallow: false,
+			Depth:   3,
+			Timeout: 20,
+		},
+	})
+	json.Unmarshal(jsonByte, &inputs[0].Source.Define)
+
+	jsonByte, _ = json.Marshal(&GithubSource{
+		Owner:                "kubesphere",
+		Repo:                 "devops",
+		CredentialId:         "github",
+		ApiUri:               "https://api.github.com",
+		DiscoverBranches:     1,
+		DiscoverPRFromOrigin: 2,
+		DiscoverPRFromForks: &GithubDiscoverPRFromForks{
+			Strategy: 1,
+			Trust:    1,
+		},
+		CloneOption: &GitCloneOption{
+			Shallow: false,
+			Depth:   3,
+			Timeout: 20,
+		},
+	})
+	json.Unmarshal(jsonByte, &inputs[1].Source.Define)
+
+	for _, input := range inputs {
+		outputString, err := createMultiBranchPipelineConfigXml("", input)
+		if err != nil {
+			t.Fatalf("should not get error %+v", err)
+		}
+		output, err := parseMultiBranchPipelineConfigXml(outputString)
+
+		if err != nil {
+			t.Fatalf("should not get error %+v", err)
+		}
+		if !reflect.DeepEqual(input, output) {
+			t.Fatalf("input [%+v] output [%+v] should equal ", input, output)
+		}
+	}
+
+}

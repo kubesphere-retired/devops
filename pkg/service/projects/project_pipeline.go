@@ -69,9 +69,10 @@ type Source struct {
 }
 
 type GitSource struct {
-	Url              string `json:"url,omitempty" mapstructure:"url"`
-	CredentialId     string `json:"credential_id,omitempty" mapstructure:"credential_id"`
-	DiscoverBranches bool   `json:"discover_branches,omitempty" mapstructure:"discover_branches"`
+	Url              string          `json:"url,omitempty" mapstructure:"url"`
+	CredentialId     string          `json:"credential_id,omitempty" mapstructure:"credential_id"`
+	DiscoverBranches bool            `json:"discover_branches,omitempty" mapstructure:"discover_branches"`
+	CloneOption      *GitCloneOption `json:"git_clone_option,omitempty" mapstructure:"git_clone_option"`
 }
 
 type GithubSource struct {
@@ -82,6 +83,13 @@ type GithubSource struct {
 	DiscoverBranches     int                        `json:"discover_branches,omitempty" mapstructure:"discover_branches"`
 	DiscoverPRFromOrigin int                        `json:"discover_pr_from_origin,omitempty" mapstructure:"discover_pr_from_origin"`
 	DiscoverPRFromForks  *GithubDiscoverPRFromForks `json:"discover_pr_from_forks,omitempty" mapstructure:"discover_pr_from_forks"`
+	CloneOption          *GitCloneOption            `json:"git_clone_option,omitempty" mapstructure:"git_clone_option"`
+}
+
+type GitCloneOption struct {
+	Shallow bool `json:"shallow" mapstructure:"shallow"`
+	Timeout int  `json:"timeout,omitempty" mapstructure:"timeout"`
+	Depth   int  `json:"depth,omitempty" mapstructure:"depth"`
 }
 
 type SvnSource struct {
@@ -430,6 +438,22 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 								Trust:    4,
 							}
 						}
+						if cloneTrait := traits.SelectElement(
+							"jenkins.plugins.git.traits.CloneOptionTrait"); cloneTrait != nil {
+							if cloneExtension := cloneTrait.SelectElement(
+								"extension"); cloneExtension != nil {
+								githubSource.CloneOption = &GitCloneOption{}
+								if value, err := strconv.ParseBool(cloneExtension.SelectElement("shallow").Text()); err == nil {
+									githubSource.CloneOption.Shallow = value
+								}
+								if value, err := strconv.ParseInt(cloneExtension.SelectElement("timeout").Text(), 10, 32); err == nil {
+									githubSource.CloneOption.Timeout = int(value)
+								}
+								if value, err := strconv.ParseInt(cloneExtension.SelectElement("depth").Text(), 10, 32); err == nil {
+									githubSource.CloneOption.Depth = int(value)
+								}
+							}
+						}
 
 					}
 					scmSource := Source{
@@ -460,6 +484,22 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 						"jenkins.plugins.git.traits.BranchDiscoveryTrait"); branchDiscoverTrait != nil {
 						gitSource.DiscoverBranches = true
 					}
+					if cloneTrait := traits.SelectElement(
+						"jenkins.plugins.git.traits.CloneOptionTrait"); cloneTrait != nil {
+						if cloneExtension := cloneTrait.SelectElement(
+							"extension"); cloneExtension != nil {
+							gitSource.CloneOption = &GitCloneOption{}
+							if value, err := strconv.ParseBool(cloneExtension.SelectElement("shallow").Text()); err == nil {
+								gitSource.CloneOption.Shallow = value
+							}
+							if value, err := strconv.ParseInt(cloneExtension.SelectElement("timeout").Text(), 10, 32); err == nil {
+								gitSource.CloneOption.Timeout = int(value)
+							}
+							if value, err := strconv.ParseInt(cloneExtension.SelectElement("depth").Text(), 10, 32); err == nil {
+								gitSource.CloneOption.Depth = int(value)
+							}
+						}
+					}
 					scmSource := Source{
 						Type: "git",
 					}
@@ -473,6 +513,7 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 							return nil, err
 						}
 					}
+
 					pipeline.Source = &scmSource
 				case "jenkins.scm.impl.SingleSCMSource":
 					singleSvnSource := &SingleSvnSource{}
@@ -681,6 +722,24 @@ func createMultiBranchPipelineConfigXml(projectName string, pipeline *MultiBranc
 		if gitDefine.DiscoverBranches {
 			traits.CreateElement("jenkins.plugins.git.traits.BranchDiscoveryTrait")
 		}
+		if gitDefine.CloneOption != nil {
+			cloneExtension := traits.CreateElement("jenkins.plugins.git.traits.CloneOptionTrait").CreateElement("extension")
+			cloneExtension.CreateAttr("class", "hudson.plugins.git.extensions.impl.CloneOption")
+			cloneExtension.CreateElement("shallow").SetText(strconv.FormatBool(gitDefine.CloneOption.Shallow))
+			cloneExtension.CreateElement("noTags").SetText(strconv.FormatBool(false))
+			cloneExtension.CreateElement("reference")
+			if gitDefine.CloneOption.Timeout >= 0 {
+				cloneExtension.CreateElement("timeout").SetText(strconv.Itoa(gitDefine.CloneOption.Timeout))
+			} else {
+				cloneExtension.CreateElement("timeout").SetText(strconv.Itoa(10))
+			}
+
+			if gitDefine.CloneOption.Depth >= 0 {
+				cloneExtension.CreateElement("depth").SetText(strconv.Itoa(gitDefine.CloneOption.Depth))
+			} else {
+				cloneExtension.CreateElement("depth").SetText(strconv.Itoa(1))
+			}
+		}
 
 	case "github":
 		githubDefine := &GithubSource{}
@@ -724,6 +783,24 @@ func createMultiBranchPipelineConfigXml(projectName string, pipeline *MultiBranc
 				return "", fmt.Errorf("unsupport trust choice")
 			}
 			forkTrait.CreateElement("trust").CreateAttr("class", trustClass)
+		}
+		if githubDefine.CloneOption != nil {
+			cloneExtension := traits.CreateElement("jenkins.plugins.git.traits.CloneOptionTrait").CreateElement("extension")
+			cloneExtension.CreateAttr("class", "hudson.plugins.git.extensions.impl.CloneOption")
+			cloneExtension.CreateElement("shallow").SetText(strconv.FormatBool(githubDefine.CloneOption.Shallow))
+			cloneExtension.CreateElement("noTags").SetText(strconv.FormatBool(false))
+			cloneExtension.CreateElement("reference")
+			if githubDefine.CloneOption.Timeout >= 0 {
+				cloneExtension.CreateElement("timeout").SetText(strconv.Itoa(githubDefine.CloneOption.Timeout))
+			} else {
+				cloneExtension.CreateElement("timeout").SetText(strconv.Itoa(10))
+			}
+
+			if githubDefine.CloneOption.Depth >= 0 {
+				cloneExtension.CreateElement("depth").SetText(strconv.Itoa(githubDefine.CloneOption.Depth))
+			} else {
+				cloneExtension.CreateElement("depth").SetText(strconv.Itoa(1))
+			}
 		}
 	case "svn":
 		svnDefine := &SvnSource{}
