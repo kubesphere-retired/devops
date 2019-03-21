@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/asaskevich/govalidator"
@@ -49,6 +50,11 @@ type AddProjectMemberRequest struct {
 
 type UpdateProjectMemberRequest struct {
 	Role string `json:"role"`
+}
+
+type ProjectRoleResponse struct {
+	ProjectRole *gojenkins.ProjectRole
+	Err         error
 }
 
 func (s *ProjectService) GetProjectHandler(w rest.ResponseWriter, r *rest.Request) {
@@ -146,21 +152,33 @@ func (s *ProjectService) CreateProjectHandler(w rest.ResponseWriter, r *rest.Req
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
+
+	var addRoleCh = make(chan *ProjectRoleResponse, 8)
+	var addRoleWg sync.WaitGroup
 	for role, permission := range JenkinsProjectPermissionMap {
-		_, err := s.Ds.Jenkins.AddProjectRole(GetProjectRoleName(project.ProjectId, role),
-			GetProjectRolePattern(project.ProjectId), permission, true)
-		if err != nil {
-			logger.Error("%+v", err)
-			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
-			return
-		}
+		addRoleWg.Add(1)
+		go func(role string, permission gojenkins.ProjectPermissionIds) {
+			_, err := s.Ds.Jenkins.AddProjectRole(GetProjectRoleName(project.ProjectId, role),
+				GetProjectRolePattern(project.ProjectId), permission, true)
+			addRoleCh <- &ProjectRoleResponse{nil, err}
+			addRoleWg.Done()
+		}(role, permission)
 	}
 	for role, permission := range JenkinsPipelinePermissionMap {
-		_, err := s.Ds.Jenkins.AddProjectRole(GetPipelineRoleName(project.ProjectId, role),
-			GetPipelineRolePattern(project.ProjectId), permission, true)
-		if err != nil {
-			logger.Error("%+v", err)
-			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+		addRoleWg.Add(1)
+		go func(role string, permission gojenkins.ProjectPermissionIds) {
+			_, err := s.Ds.Jenkins.AddProjectRole(GetPipelineRoleName(project.ProjectId, role),
+				GetPipelineRolePattern(project.ProjectId), permission, true)
+			addRoleCh <- &ProjectRoleResponse{nil, err}
+			addRoleWg.Done()
+		}(role, permission)
+	}
+	addRoleWg.Wait()
+	close(addRoleCh)
+	for addRoleResponse := range addRoleCh {
+		if addRoleResponse.Err != nil {
+			logger.Error("%+v", addRoleResponse.Err)
+			rest.Error(w, addRoleResponse.Err.Error(), stringutils.GetJenkinsStatusCode(addRoleResponse.Err))
 			return
 		}
 	}
