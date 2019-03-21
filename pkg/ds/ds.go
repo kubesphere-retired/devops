@@ -15,6 +15,9 @@ package ds
 
 import (
 	"strconv"
+	"strings"
+
+	"github.com/kubesphere/sonargo/sonar"
 
 	"kubesphere.io/devops/pkg/config"
 	"kubesphere.io/devops/pkg/constants"
@@ -27,12 +30,14 @@ type Ds struct {
 	cfg     *config.Config
 	Db      *db.Database
 	Jenkins *gojenkins.Jenkins
+	Sonar   *sonargo.Client
 }
 
 func NewDs(cfg *config.Config) *Ds {
 	s := &Ds{cfg: cfg}
-	s.openDatabase()
+	//s.openDatabase()
 	s.connectJenkins()
+	s.connectSonar()
 	return s
 }
 
@@ -73,4 +78,28 @@ func (p *Ds) connectJenkins() {
 		}
 	}
 
+}
+
+func (p *Ds) connectSonar() {
+	if p.cfg.Sonar.Address == "" {
+		logger.Info("skip sonar init")
+		return
+	}
+	if !strings.HasSuffix(p.cfg.Sonar.Address, "/") {
+		p.cfg.Sonar.Address += "/"
+	}
+	client, err := sonargo.NewClientWithToken(p.cfg.Sonar.Address+"api/", p.cfg.Sonar.Token)
+	if err != nil {
+		logger.Critical("failed to connect to sonar")
+		panic(err)
+	}
+	_, _, err = client.Projects.Search(nil)
+	if err != nil {
+		logger.Critical("failed to search sonar projects [%+v]", err)
+		err.Error()
+		panic(err)
+	}
+	logger.Info("init sonar client success")
+	p.Sonar = client
+	return
 }
