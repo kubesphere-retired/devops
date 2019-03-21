@@ -89,11 +89,35 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
+  name = "github.com/golang/glog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+
+[[projects]]
+  digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
+  name = "github.com/google/go-querystring"
+  packages = ["query"]
+  pruneopts = "UT"
+  revision = "44c6ddd0a2342c386950e880b658017258da92fc"
+  version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
   digest = "1:26ee455faa224e7031355a0b51ce60c489f0fb4aa2cc96b42a622c320f0c0049"
   name = "github.com/koding/multiconfig"
   packages = ["."]
   pruneopts = "UT"
   revision = "69c27309b2d751c576b59ea9c3726597c2375da3"
+
+[[projects]]
+  digest = "1:f272f1f4c5782fc93f4935761250bbef2b090366bd2bad551a990f2c9580af59"
+  name = "github.com/kubesphere/sonargo"
+  packages = ["sonar"]
+  pruneopts = "UT"
+  revision = "324280ab85fd5f875fc64217518b52e3f16e1795"
+  version = "v0.0.1"
 
 [[projects]]
   digest = "1:645110e089152bd0f4a011a2648fbb0e4df5977be73ca605781157ac297f50c4"
@@ -176,6 +200,7 @@
     "github.com/gocraft/dbr/dialect",
     "github.com/golang/example/stringutil",
     "github.com/koding/multiconfig",
+    "github.com/kubesphere/sonargo/sonar",
     "github.com/mitchellh/mapstructure",
     "github.com/sony/sonyflake",
     "github.com/speps/go-hashids",

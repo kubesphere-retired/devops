@@ -27,7 +27,7 @@ type Folder struct {
 }
 
 type FolderResponse struct {
-	Actions     []generalObj
+	Actions     []GeneralObj
 	Description string     `json:"description"`
 	DisplayName string     `json:"displayName"`
 	Name        string     `json:"name"`
