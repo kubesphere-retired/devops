@@ -18,12 +18,11 @@ install:
   - go get golang.org/x/tools/cmd/goimports
 
 script:
-  - make check
   - make test
 
 deploy:
   - provider: script
-    script: bash hack/docker_push.sh advanced-1.0.2-dev
+    script: bash hack/docker_push.sh advanced-2.0.0-dev
     on:
-      branch: advanced-1.0
+      branch: master
       repo: kubesphere/devops
