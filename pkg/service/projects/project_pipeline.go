@@ -18,11 +18,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/beevik/etree"
 	"github.com/mitchellh/mapstructure"
-
-	"kubesphere.io/devops/pkg/utils/idutils"
 )
 
 const (
@@ -603,7 +602,7 @@ func parseMultiBranchPipelineScm(config string) (*ScmInfo, error) {
 
 }
 
-func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, error) {
+func createMultiBranchPipelineConfigXml(projectName string, pipeline *MultiBranchPipeline) (string, error) {
 	doc := etree.NewDocument()
 	xmlString := `
 <?xml version='1.0' encoding='UTF-8'?>
@@ -649,7 +648,11 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 		timeTrigger := triggers.CreateElement(
 			"com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger")
 		timeTrigger.CreateAttr("plugin", "cloudbees-folder")
-		timeTrigger.CreateElement("spec")
+		millis, err := strconv.ParseInt(pipeline.TimerTrigger.Interval, 10, 64)
+		if err != nil {
+			return "", err
+		}
+		timeTrigger.CreateElement("spec").SetText(toCrontab(millis))
 		timeTrigger.CreateElement("interval").SetText(pipeline.TimerTrigger.Interval)
 
 		triggers.CreateElement("disabled").SetText("false")
@@ -678,7 +681,7 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 		gitSource := branchSource.CreateElement("source")
 		gitSource.CreateAttr("class", "jenkins.plugins.git.GitSCMSource")
 		gitSource.CreateAttr("plugin", "git")
-		gitSource.CreateElement("id").SetText(idutils.GetUuid("git-"))
+		gitSource.CreateElement("id").SetText(projectName + pipeline.Name)
 		gitSource.CreateElement("remote").SetText(gitDefine.Url)
 		if gitDefine.CredentialId != "" {
 			gitSource.CreateElement("credentialsId").SetText(gitDefine.CredentialId)
@@ -700,7 +703,7 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 		githubSource := branchSource.CreateElement("source")
 		githubSource.CreateAttr("class", "org.jenkinsci.plugins.github_branch_source.GitHubSCMSource")
 		githubSource.CreateAttr("plugin", "github-branch-source")
-		githubSource.CreateElement("id").SetText(idutils.GetUuid("github-"))
+		githubSource.CreateElement("id").SetText(projectName + pipeline.Name)
 		githubSource.CreateElement("credentialsId").SetText(githubDefine.CredentialId)
 		githubSource.CreateElement("repoOwner").SetText(githubDefine.Owner)
 		githubSource.CreateElement("repository").SetText(githubDefine.Repo)
@@ -746,7 +749,7 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 		svnSource := branchSource.CreateElement("source")
 		svnSource.CreateAttr("class", "jenkins.scm.impl.subversion.SubversionSCMSource")
 		svnSource.CreateAttr("plugin", "subversion")
-		svnSource.CreateElement("id").SetText(idutils.GetUuid("svn-"))
+		svnSource.CreateElement("id").SetText(projectName + pipeline.Name)
 		if svnDefine.CredentialId != "" {
 			svnSource.CreateElement("credentialsId").SetText(svnDefine.CredentialId)
 		}
@@ -770,7 +773,7 @@ func createMultiBranchPipelineConfigXml(pipeline *MultiBranchPipeline) (string, 
 		svnSource.CreateAttr("class", "jenkins.scm.impl.SingleSCMSource")
 		svnSource.CreateAttr("plugin", "scm-api")
 
-		svnSource.CreateElement("id").SetText(idutils.GetUuid("single-svn-"))
+		svnSource.CreateElement("id").SetText(projectName + pipeline.Name)
 		svnSource.CreateElement("name").SetText("master")
 
 		scm := svnSource.CreateElement("scm")
@@ -820,4 +823,27 @@ func replaceXmlVersion(config, oldVersion, targetVersion string) string {
 	lines[0] = strings.Replace(lines[0], oldVersion, targetVersion, -1)
 	output := strings.Join(lines, "\n")
 	return output
+}
+
+func toCrontab(millis int64) string {
+	if millis*time.Millisecond.Nanoseconds() <= 5*time.Minute.Nanoseconds() {
+		return "* * * * *"
+	}
+	if millis*time.Millisecond.Nanoseconds() <= 30*time.Minute.Nanoseconds() {
+		return "H/5 * * * *"
+	}
+	if millis*time.Millisecond.Nanoseconds() <= 1*time.Hour.Nanoseconds() {
+		return "H/15 * * * *"
+	}
+	if millis*time.Millisecond.Nanoseconds() <= 8*time.Hour.Nanoseconds() {
+		return "H/30 * * * *"
+	}
+	if millis*time.Millisecond.Nanoseconds() <= 24*time.Hour.Nanoseconds() {
+		return "H H/4 * * *"
+	}
+	if millis*time.Millisecond.Nanoseconds() <= 48*time.Hour.Nanoseconds() {
+		return "H H/12 * * *"
+	}
+	return "H H * * *"
+
 }

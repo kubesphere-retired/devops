@@ -2,6 +2,6 @@
 
 Version=$1
 
-make build-image-${Version}
+make build-dev-image-${Version}
 echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-make push-image-${Version}
+make push-dev-image-${Version}

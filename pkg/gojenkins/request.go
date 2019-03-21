@@ -52,11 +52,12 @@ func NewAPIRequest(method string, endpoint string, payload io.Reader) *APIReques
 }
 
 type Requester struct {
-	Base      string
-	BasicAuth *BasicAuth
-	Client    *http.Client
-	CACert    []byte
-	SslVerify bool
+	Base        string
+	BasicAuth   *BasicAuth
+	Client      *http.Client
+	CACert      []byte
+	SslVerify   bool
+	connControl chan struct{}
 }
 
 func (r *Requester) SetCrumb(ar *APIRequest) error {
@@ -113,7 +114,7 @@ func (r *Requester) PostXML(endpoint string, xml string, responseStruct interfac
 	if err := r.SetCrumb(ar); err != nil {
 		return nil, err
 	}
-	ar.SetHeader("Content-Type", "application/xml")
+	ar.SetHeader("Content-Type", "application/xml;charset=utf-8")
 	ar.Suffix = ""
 	return r.Do(ar, &responseStruct, querystring)
 }
@@ -180,7 +181,6 @@ func (r *Requester) Do(ar *APIRequest, responseStruct interface{}, options ...in
 		}
 	}
 	var req *http.Request
-
 	if fileUpload {
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
@@ -226,13 +226,17 @@ func (r *Requester) Do(ar *APIRequest, responseStruct interface{}, options ...in
 	if r.BasicAuth != nil {
 		req.SetBasicAuth(r.BasicAuth.Username, r.BasicAuth.Password)
 	}
+	req.Close = true
 	req.Header.Add("Accept", "*")
 	for k := range ar.Headers {
 		req.Header.Add(k, ar.Headers.Get(k))
 	}
+	r.connControl <- struct{}{}
 	if response, err := r.Client.Do(req); err != nil {
+		<-r.connControl
 		return nil, err
 	} else {
+		<-r.connControl
 		errorText := response.Header.Get("X-Error")
 		if errorText != "" {
 			return nil, errors.New(errorText)
@@ -266,13 +270,17 @@ func (r *Requester) DoPostForm(ar *APIRequest, responseStruct interface{}, form 
 	if r.BasicAuth != nil {
 		req.SetBasicAuth(r.BasicAuth.Username, r.BasicAuth.Password)
 	}
+	req.Close = true
 	req.Header.Add("Accept", "*")
 	for k := range ar.Headers {
 		req.Header.Add(k, ar.Headers.Get(k))
 	}
+	r.connControl <- struct{}{}
 	if response, err := r.Client.Do(req); err != nil {
+		<-r.connControl
 		return nil, err
 	} else {
+		<-r.connControl
 		errorText := response.Header.Get("X-Error")
 		if errorText != "" {
 			return nil, errors.New(errorText)

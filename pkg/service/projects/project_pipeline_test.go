@@ -240,7 +240,7 @@ func Test_MultiBranchPipelineConfig(t *testing.T) {
 		},
 	}
 	for _, input := range inputs {
-		outputString, err := createMultiBranchPipelineConfigXml(input)
+		outputString, err := createMultiBranchPipelineConfigXml("", input)
 		if err != nil {
 			t.Fatalf("should not get error %+v", err)
 		}
@@ -272,7 +272,7 @@ func Test_MultiBranchPipelineConfig_Discarder(t *testing.T) {
 		},
 	}
 	for _, input := range inputs {
-		outputString, err := createMultiBranchPipelineConfigXml(input)
+		outputString, err := createMultiBranchPipelineConfigXml("", input)
 		if err != nil {
 			t.Fatalf("should not get error %+v", err)
 		}
@@ -302,7 +302,7 @@ func Test_MultiBranchPipelineConfig_TimerTrigger(t *testing.T) {
 		},
 	}
 	for _, input := range inputs {
-		outputString, err := createMultiBranchPipelineConfigXml(input)
+		outputString, err := createMultiBranchPipelineConfigXml("", input)
 		if err != nil {
 			t.Fatalf("should not get error %+v", err)
 		}
@@ -403,7 +403,7 @@ func Test_MultiBranchPipelineConfig_Source(t *testing.T) {
 	})
 	json.Unmarshal(jsonByte, &inputs[3].Source.Define)
 	for _, input := range inputs {
-		outputString, err := createMultiBranchPipelineConfigXml(input)
+		outputString, err := createMultiBranchPipelineConfigXml("", input)
 		if err != nil {
 			t.Fatalf("should not get error %+v", err)
 		}

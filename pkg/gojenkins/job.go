@@ -60,7 +60,7 @@ type ParameterDefinition struct {
 
 type JobResponse struct {
 	Class              string `json:"_class"`
-	Actions            []generalObj
+	Actions            []GeneralObj
 	Buildable          bool `json:"buildable"`
 	Builds             []JobBuild
 	Color              string      `json:"color"`

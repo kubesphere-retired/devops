@@ -38,19 +38,19 @@ type Role struct {
 var DefaultRoles = []*Role{
 	{
 		Name:        ProjectOwner,
-		Description: "项目的所有者，可以进行项目的所有操作",
+		Description: "Owner have access to do all the operations of a DevOps project and own the highest permissions as well.",
 	},
 	{
 		Name:        ProjectMaintainer,
-		Description: "项目的主要维护者，可以进行项目内的凭证配置、pipeline配置等操作",
+		Description: "Maintainer have access to manage pipeline and credential configuration in a DevOps project.",
 	},
 	{
 		Name:        ProjectDeveloper,
-		Description: "项目的开发者，可以进行pipeline的触发以及查看",
+		Description: "Developer is able to view and trigger the pipeline.",
 	},
 	{
 		Name:        ProjectReporter,
-		Description: "项目的观察者，可以查看pipeline的运行情况",
+		Description: "Reporter is only allowed to view the status of the pipeline.",
 	},
 }
 
@@ -61,7 +61,7 @@ func (s *ProjectService) GetMembersHandler(w rest.ResponseWriter, r *rest.Reques
 		ProjectOwner, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
 	if err != nil {
 		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	memberships := make([]*models.ProjectMembership, 0)
@@ -86,7 +86,7 @@ func (s *ProjectService) GetMemberHandler(w rest.ResponseWriter, r *rest.Request
 		ProjectOwner, ProjectMaintainer, ProjectReporter, ProjectDeveloper})
 	if err != nil {
 		logger.Error("%+v", err)
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		rest.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	memberships := &models.ProjectMembership{}

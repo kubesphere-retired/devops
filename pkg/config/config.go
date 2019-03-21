@@ -27,6 +27,7 @@ type Config struct {
 	Log     LogConfig
 	Mysql   MysqlConfig
 	Jenkins JenkinsConfig
+	Sonar   SonarConfig
 }
 
 type LogConfig struct {
@@ -40,10 +41,17 @@ type MysqlConfig struct {
 	Password string `default:"password"`
 	Database string `default:"kubesphere"`
 }
+
 type JenkinsConfig struct {
 	Address  string `default:"http://jenkins.kubesphere.com/"`
 	User     string `default:"magicsong"`
 	Password string `default:"devops"`
+	MaxConn  string `default:"20"`
+}
+
+type SonarConfig struct {
+	Address string `default:""`
+	Token   string `default:""`
 }
 
 func (m *MysqlConfig) GetUrl() string {
