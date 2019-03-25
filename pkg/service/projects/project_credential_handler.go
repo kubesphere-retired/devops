@@ -14,11 +14,14 @@ limitations under the License.
 package projects
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/asaskevich/govalidator"
 	"github.com/gocraft/dbr"
@@ -47,7 +50,7 @@ type CredentialRequest struct {
 type UsernamePasswordCredentialRequest struct {
 	Id          string `json:"id"`
 	Username    string `json:"username"`
-	Password    string `json:"password"`
+	Password    string `json:"password,omitempty"`
 	Description string `json:"description"`
 }
 
@@ -96,10 +99,11 @@ type CredentialResponse struct {
 			} `json:"ranges"`
 		} `json:"usage,omitempty"`
 	} `json:"fingerprint,omitempty"`
-	Description string     `json:"description"`
-	Domain      string     `json:"domain"`
-	CreateTime  *time.Time `json:"create_time,omitempty"`
-	Creator     string     `json:"creator,omitempty"`
+	Description string                 `json:"description"`
+	Domain      string                 `json:"domain"`
+	CreateTime  *time.Time             `json:"create_time,omitempty"`
+	Creator     string                 `json:"creator,omitempty"`
+	Content     map[string]interface{} `json:"content"`
 }
 
 func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.Request) {
@@ -470,6 +474,7 @@ func (s *ProjectService) UpdateCredentialHandler(w rest.ResponseWriter, r *rest.
 }
 
 func (s *ProjectService) GetCredentialHandler(w rest.ResponseWriter, r *rest.Request) {
+	getContent := r.URL.Query().Get("content")
 	projectId := r.PathParams["id"]
 	operator := userutils.GetUserNameFromRequest(r)
 	credentialId := r.PathParams["cid"]
@@ -486,8 +491,8 @@ func (s *ProjectService) GetCredentialHandler(w rest.ResponseWriter, r *rest.Req
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
-	}
 
+	}
 	projectCredential := &models.ProjectCredential{}
 	err = s.Ds.Db.Select(models.ProjectCredentialColumns...).
 		From(models.ProjectCredentialTableName).Where(
@@ -501,6 +506,81 @@ func (s *ProjectService) GetCredentialHandler(w rest.ResponseWriter, r *rest.Req
 	}
 
 	response := formatCredentialResponse(credentialResponse, projectCredential)
+	if getContent != "" {
+		stringBody, err := s.Ds.Jenkins.GetCredentialContentInFolder(domain, credentialId, projectId)
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+		stringReader := strings.NewReader(stringBody)
+		doc, err := goquery.NewDocumentFromReader(stringReader)
+		if err != nil {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+
+		switch response.Type {
+		case CredentialTypeKubeConfig:
+			content := &KubeconfigCredentialRequest{}
+			doc.Find("textarea[name*=content]").Each(func(i int, selection *goquery.Selection) {
+				value := selection.Text()
+				content.Content = value
+			})
+
+			doc.Find("input[name*=id][type=text]").Each(func(i int, selection *goquery.Selection) {
+				value, _ := selection.Attr("value")
+				content.Id = value
+			})
+			doc.Find("input[name*=description]").Each(func(i int, selection *goquery.Selection) {
+				value, _ := selection.Attr("value")
+				content.Description = value
+			})
+			jsonBytes, _ := json.Marshal(content)
+			json.Unmarshal(jsonBytes, &response.Content)
+
+		case CredentialTypeUsernamePassword:
+			content := &UsernamePasswordCredentialRequest{}
+			doc.Find("input[name*=username]").Each(func(i int, selection *goquery.Selection) {
+				value, _ := selection.Attr("value")
+				content.Username = value
+			})
+
+			doc.Find("input[name*=id][type=text]").Each(func(i int, selection *goquery.Selection) {
+				value, _ := selection.Attr("value")
+				content.Id = value
+			})
+			doc.Find("input[name*=description]").Each(func(i int, selection *goquery.Selection) {
+				value, _ := selection.Attr("value")
+				content.Description = value
+			})
+			jsonBytes, _ := json.Marshal(content)
+			json.Unmarshal(jsonBytes, &response.Content)
+
+		case CredentialTypeSsh:
+			content := &SshCredentialRequest{}
+			doc.Find("input[name*=username]").Each(func(i int, selection *goquery.Selection) {
+				value, _ := selection.Attr("value")
+				content.Username = value
+			})
+
+			doc.Find("input[name*=id][type=text]").Each(func(i int, selection *goquery.Selection) {
+				value, _ := selection.Attr("value")
+				content.Id = value
+			})
+			doc.Find("input[name*=description]").Each(func(i int, selection *goquery.Selection) {
+				value, _ := selection.Attr("value")
+				content.Description = value
+			})
+			doc.Find("textarea[name*=privateKey]").Each(func(i int, selection *goquery.Selection) {
+				value := selection.Text()
+				content.PrivateKey = value
+			})
+			jsonBytes, _ := json.Marshal(content)
+			json.Unmarshal(jsonBytes, &response.Content)
+		}
+	}
 	w.WriteJson(response)
 	return
 }
@@ -534,6 +614,7 @@ func (s *ProjectService) GetCredentialsHandler(w rest.ResponseWriter, r *rest.Re
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
+
 	response := formatCredentialsResponse(jenkinsCredentialResponses, projectCredentials)
 	w.WriteJson(response)
 	return

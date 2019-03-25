@@ -787,6 +787,30 @@ func (j *Jenkins) GetCredentialInFolder(domain, id string, folders ...string) (*
 	return responseStruct, nil
 }
 
+func (j *Jenkins) GetCredentialContentInFolder(domain, id string, folders ...string) (string, error) {
+	responseStruct := ""
+	prePath := ""
+	if domain == "" {
+		domain = "_"
+	}
+	if len(folders) == 0 {
+		return "", fmt.Errorf("folder name shoud not be nil")
+	}
+	for _, folder := range folders {
+		prePath = prePath + fmt.Sprintf("/job/%s", folder)
+	}
+	response, err := j.Requester.GetHtml(prePath+
+		fmt.Sprintf("/credentials/store/folder/domain/%s/credential/%s/update", domain, id),
+		&responseStruct, nil)
+	if err != nil {
+		return "", err
+	}
+	if response.StatusCode != http.StatusOK {
+		return "", errors.New(strconv.Itoa(response.StatusCode))
+	}
+	return responseStruct, nil
+}
+
 func (j *Jenkins) GetCredentialsInFolder(domain string, folders ...string) ([]*CredentialResponse, error) {
 	prePath := ""
 	if len(folders) == 0 {
