@@ -229,7 +229,7 @@ func (r *Requester) DoGet(ar *APIRequest, responseStruct interface{}, options ..
 		req.SetBasicAuth(r.BasicAuth.Username, r.BasicAuth.Password)
 	}
 	req.Close = true
-	req.Header.Add("Accept", "*")
+	req.Header.Add("Accept", "*/*")
 	for k := range ar.Headers {
 		req.Header.Add(k, ar.Headers.Get(k))
 	}
@@ -242,6 +242,10 @@ func (r *Requester) DoGet(ar *APIRequest, responseStruct interface{}, options ..
 		errorText := response.Header.Get("X-Error")
 		if errorText != "" {
 			return nil, errors.New(errorText)
+		}
+		err := CheckResponse(response)
+		if err != nil {
+			return nil, err
 		}
 		switch responseStruct.(type) {
 		case *string:
@@ -329,7 +333,7 @@ func (r *Requester) Do(ar *APIRequest, responseStruct interface{}, options ...in
 		req.SetBasicAuth(r.BasicAuth.Username, r.BasicAuth.Password)
 	}
 	req.Close = true
-	req.Header.Add("Accept", "*")
+	req.Header.Add("Accept", "*/*")
 	for k := range ar.Headers {
 		req.Header.Add(k, ar.Headers.Get(k))
 	}
@@ -342,6 +346,10 @@ func (r *Requester) Do(ar *APIRequest, responseStruct interface{}, options ...in
 		errorText := response.Header.Get("X-Error")
 		if errorText != "" {
 			return nil, errors.New(errorText)
+		}
+		err := CheckResponse(response)
+		if err != nil {
+			return nil, err
 		}
 		switch responseStruct.(type) {
 		case *string:
@@ -373,7 +381,7 @@ func (r *Requester) DoPostForm(ar *APIRequest, responseStruct interface{}, form 
 		req.SetBasicAuth(r.BasicAuth.Username, r.BasicAuth.Password)
 	}
 	req.Close = true
-	req.Header.Add("Accept", "*")
+	req.Header.Add("Accept", "*/*")
 	for k := range ar.Headers {
 		req.Header.Add(k, ar.Headers.Get(k))
 	}
@@ -386,6 +394,10 @@ func (r *Requester) DoPostForm(ar *APIRequest, responseStruct interface{}, form 
 		errorText := response.Header.Get("X-Error")
 		if errorText != "" {
 			return nil, errors.New(errorText)
+		}
+		err := CheckResponse(response)
+		if err != nil {
+			return nil, err
 		}
 		switch responseStruct.(type) {
 		case *string:
@@ -420,4 +432,31 @@ func (r *Requester) ReadJSONResponse(response *http.Response, responseStruct int
 		return response, nil
 	}
 	return response, nil
+}
+
+type ErrorResponse struct {
+	Body     []byte
+	Response *http.Response
+	Message  string
+}
+
+func (e *ErrorResponse) Error() string {
+	u := fmt.Sprintf("%s://%s%s", e.Response.Request.URL.Scheme, e.Response.Request.URL.Host, e.Response.Request.URL.RequestURI())
+	return fmt.Sprintf("%s %s: %d %s", e.Response.Request.Method, u, e.Response.StatusCode, e.Message)
+}
+func CheckResponse(r *http.Response) error {
+
+	switch r.StatusCode {
+	case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent, http.StatusFound, http.StatusNotModified:
+		return nil
+	}
+	defer r.Body.Close()
+	errorResponse := &ErrorResponse{Response: r}
+	data, err := ioutil.ReadAll(r.Body)
+	if err == nil && data != nil {
+		errorResponse.Body = data
+		errorResponse.Message = string(data)
+	}
+
+	return errorResponse
 }
