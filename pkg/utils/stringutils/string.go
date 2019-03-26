@@ -19,6 +19,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/asaskevich/govalidator"
+	"kubesphere.io/devops/pkg/gojenkins"
 )
 
 // Creates an slice of slice values not included in the other given slice.
@@ -84,6 +85,9 @@ func GetJenkinsStatusCode(jenkinsErr error) int {
 		if !govalidator.IsNull(message) {
 			return code
 		}
+	}
+	if jErr, ok := jenkinsErr.(*gojenkins.ErrorResponse); ok {
+		return jErr.Response.StatusCode
 	}
 	return http.StatusInternalServerError
 }
