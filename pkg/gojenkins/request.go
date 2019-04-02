@@ -62,8 +62,14 @@ type Requester struct {
 
 func (r *Requester) SetCrumb(ar *APIRequest) error {
 	crumbData := map[string]string{}
-	response, _ := r.GetJSON("/crumbIssuer/api/json", &crumbData, nil)
-
+	response, err := r.GetJSON("/crumbIssuer/api/json", &crumbData, nil)
+	if err != nil {
+		jenkinsError, ok := err.(*ErrorResponse)
+		if ok && jenkinsError.Response.StatusCode == http.StatusNotFound {
+			return nil
+		}
+		return err
+	}
 	if response.StatusCode == 200 && crumbData["crumbRequestField"] != "" {
 		ar.SetHeader(crumbData["crumbRequestField"], crumbData["crumb"])
 	}
