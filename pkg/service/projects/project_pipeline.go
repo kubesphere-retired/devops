@@ -73,6 +73,7 @@ type GitSource struct {
 	CredentialId     string          `json:"credential_id,omitempty" mapstructure:"credential_id"`
 	DiscoverBranches bool            `json:"discover_branches,omitempty" mapstructure:"discover_branches"`
 	CloneOption      *GitCloneOption `json:"git_clone_option,omitempty" mapstructure:"git_clone_option"`
+	RegexFilter      string          `json:"regex_filter,omitempty" mapstructure:"regex_filter"`
 }
 
 type GithubSource struct {
@@ -84,6 +85,7 @@ type GithubSource struct {
 	DiscoverPRFromOrigin int                        `json:"discover_pr_from_origin,omitempty" mapstructure:"discover_pr_from_origin"`
 	DiscoverPRFromForks  *GithubDiscoverPRFromForks `json:"discover_pr_from_forks,omitempty" mapstructure:"discover_pr_from_forks"`
 	CloneOption          *GitCloneOption            `json:"git_clone_option,omitempty" mapstructure:"git_clone_option"`
+	RegexFilter          string                     `json:"regex_filter,omitempty" mapstructure:"regex_filter"`
 }
 
 type GitCloneOption struct {
@@ -455,6 +457,12 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 							}
 						}
 
+						if regexTrait := traits.SelectElement(
+							"jenkins.scm.impl.trait.RegexSCMHeadFilterTrait"); regexTrait != nil {
+							if regex := regexTrait.SelectElement("regex"); regex != nil {
+								githubSource.RegexFilter = regex.Text()
+							}
+						}
 					}
 					scmSource := Source{
 						Type: "github",
@@ -498,6 +506,12 @@ func parseMultiBranchPipelineConfigXml(config string) (*MultiBranchPipeline, err
 							if value, err := strconv.ParseInt(cloneExtension.SelectElement("depth").Text(), 10, 32); err == nil {
 								gitSource.CloneOption.Depth = int(value)
 							}
+						}
+					}
+					if regexTrait := traits.SelectElement(
+						"jenkins.scm.impl.trait.RegexSCMHeadFilterTrait"); regexTrait != nil {
+						if regex := regexTrait.SelectElement("regex"); regex != nil {
+							gitSource.RegexFilter = regex.Text()
 						}
 					}
 					scmSource := Source{
@@ -741,6 +755,12 @@ func createMultiBranchPipelineConfigXml(projectName string, pipeline *MultiBranc
 			}
 		}
 
+		if gitDefine.RegexFilter != "" {
+			regexTraits := traits.CreateElement("jenkins.scm.impl.trait.RegexSCMHeadFilterTrait")
+			regexTraits.CreateAttr("plugin", "scm-api@2.4.0")
+			regexTraits.CreateElement("regex").SetText(gitDefine.RegexFilter)
+		}
+
 	case "github":
 		githubDefine := &GithubSource{}
 		err := mapstructure.Decode(pipeline.Source.Define, githubDefine)
@@ -802,6 +822,12 @@ func createMultiBranchPipelineConfigXml(projectName string, pipeline *MultiBranc
 				cloneExtension.CreateElement("depth").SetText(strconv.Itoa(1))
 			}
 		}
+		if githubDefine.RegexFilter != "" {
+			regexTraits := traits.CreateElement("jenkins.scm.impl.trait.RegexSCMHeadFilterTrait")
+			regexTraits.CreateAttr("plugin", "scm-api@2.4.0")
+			regexTraits.CreateElement("regex").SetText(githubDefine.RegexFilter)
+		}
+
 	case "svn":
 		svnDefine := &SvnSource{}
 		err := mapstructure.Decode(pipeline.Source.Define, svnDefine)
