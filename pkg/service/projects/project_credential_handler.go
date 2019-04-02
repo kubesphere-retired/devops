@@ -17,7 +17,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -142,12 +141,11 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			rest.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
-		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+		if err != nil && stringutils.GetJenkinsStatusCode(err) != http.StatusNotFound {
 			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
 		credentialId, err := s.Ds.Jenkins.CreateUsernamePasswordCredentialInFolder(request.Domain, UPRequest.Id,
 			UPRequest.Username, UPRequest.Password, UPRequest.Description, projectId)
 		if err != nil {
@@ -186,7 +184,7 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			rest.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
-		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+		if err != nil && stringutils.GetJenkinsStatusCode(err) != http.StatusNotFound {
 			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -231,7 +229,7 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			rest.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
-		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+		if err != nil && stringutils.GetJenkinsStatusCode(err) != http.StatusNotFound {
 			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -275,7 +273,8 @@ func (s *ProjectService) CreateCredentialHandler(w rest.ResponseWriter, r *rest.
 			rest.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
-		if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+
+		if err != nil && stringutils.GetJenkinsStatusCode(err) != http.StatusNotFound {
 			logger.Error("%+v", err)
 			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return

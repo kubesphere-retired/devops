@@ -15,7 +15,6 @@ package projects
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -260,11 +259,13 @@ func (s *ProjectService) DeleteProjectHandler(w rest.ResponseWriter, r *rest.Req
 		return
 	}
 	_, err = s.Ds.Jenkins.DeleteJob(projectId)
-	if err != nil && err.Error() != strconv.Itoa(http.StatusNotFound) {
+
+	if err != nil && stringutils.GetJenkinsStatusCode(err) != http.StatusNotFound {
 		logger.Error("%+v", err)
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
+	
 	roleNames := make([]string, 0)
 	for role := range JenkinsProjectPermissionMap {
 		roleNames = append(roleNames, GetProjectRoleName(projectId, role))
