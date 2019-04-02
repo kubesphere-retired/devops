@@ -265,7 +265,7 @@ func (s *ProjectService) DeleteProjectHandler(w rest.ResponseWriter, r *rest.Req
 		rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
 		return
 	}
-	
+
 	roleNames := make([]string, 0)
 	for role := range JenkinsProjectPermissionMap {
 		roleNames = append(roleNames, GetProjectRoleName(projectId, role))
