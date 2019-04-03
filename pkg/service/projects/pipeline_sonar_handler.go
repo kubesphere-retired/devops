@@ -125,6 +125,7 @@ func (s *ProjectService) getBuildSonarResults(build *gojenkins.Build) ([]*SonarS
 				Resolved:         "false",
 				Ps:               "10",
 				S:                "FILE_LINE",
+				Facets:           "severities,types",
 			}
 			issuesSearch, _, err := s.Ds.Sonar.Issues.Search(issuesSearchOption)
 			sonarStatus.Issues = issuesSearch

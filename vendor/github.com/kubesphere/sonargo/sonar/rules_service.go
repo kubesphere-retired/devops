@@ -65,8 +65,9 @@ type Actives struct {
 }
 
 type Facet struct {
-	Name   string        `json:"name,omitempty"`
-	Values []*FacetValue `json:"values,omitempty"`
+	Name     string        `json:"name,omitempty"`
+	Property string        `json:"property,omitempty"`
+	Values   []*FacetValue `json:"values,omitempty"`
 }
 
 type SquidParam struct {
