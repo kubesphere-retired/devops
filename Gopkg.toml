@@ -2,3 +2,6 @@
   go-tests = true
   unused-packages = true
 
+[[constraint]]
+  name = "github.com/kubesphere/sonargo"
+  version = "0.0.2"

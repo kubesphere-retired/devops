@@ -37,7 +37,7 @@ type IssuesSearchObject struct {
 	Rules       []*Rule      `json:"rules,omitempty"`
 	Total       int          `json:"total,omitempty"`
 	Users       []*User      `json:"users,omitempty"`
-	Facets      []string     `json:"facets,omitempty"`
+	Facets      []*Facet     `json:"facets,omitempty"`
 }
 
 type Comment struct {
@@ -323,6 +323,7 @@ type IssuesSearchOption struct {
 	CreatedAt          string `url:"createdAt,omitempty"`          // Description:"Datetime to retrieve issues created during a specific analysis",ExampleValue:"2017-10-19T13:00:00+0200"
 	CreatedBefore      string `url:"createdBefore,omitempty"`      // Description:"To retrieve issues created before the given date (inclusive). <br>Either a date (server timezone) or datetime can be provided.",ExampleValue:"2017-10-19 or 2017-10-19T13:00:00+0200"
 	CreatedInLast      string `url:"createdInLast,omitempty"`      // Description:"To retrieve issues created during a time span before the current time (exclusive). Accepted units are 'y' for year, 'm' for month, 'w' for week and 'd' for day. If this parameter is set, createdAfter must not be set",ExampleValue:"1m2w (1 month 2 weeks)"
+	Facets             string `url:"facets,omitempty"`             // Description:"Comma-separated list of the facets to be computed. No facet is computed by default."
 	Issues             string `url:"issues,omitempty"`             // Description:"Comma-separated list of issue keys",ExampleValue:"5bccd6e8-f525-43a2-8d76-fcb13dde79ef"
 	Languages          string `url:"languages,omitempty"`          // Description:"Comma-separated list of languages. Available since 4.4",ExampleValue:"java,js"
 	P                  string `url:"p,omitempty"`                  // Description:"1-based page number",ExampleValue:"42"

@@ -128,12 +128,12 @@
   revision = "69c27309b2d751c576b59ea9c3726597c2375da3"
 
 [[projects]]
-  digest = "1:f272f1f4c5782fc93f4935761250bbef2b090366bd2bad551a990f2c9580af59"
+  digest = "1:a0c81030b65e467a7128668f24707beeca9812a9b1ed38c6d5db5b967da4e3b8"
   name = "github.com/kubesphere/sonargo"
   packages = ["sonar"]
   pruneopts = "UT"
-  revision = "324280ab85fd5f875fc64217518b52e3f16e1795"
-  version = "v0.0.1"
+  revision = "313ae64d680ed14ef12e806ab0dd3777240e908d"
+  version = "v0.0.2"
 
 [[projects]]
   digest = "1:645110e089152bd0f4a011a2648fbb0e4df5977be73ca605781157ac297f50c4"
