@@ -8,9 +8,8 @@ pipeline {
     stage('unit test'){
        steps{
         container('go'){
-           sh 'mkdir -p /home/jenkins/go/src/kubesphere.io/devops'
-           sh "ln -s `pwd` /home/jenkins/go/src/kubesphere.io/devops"
-           input('')
+           sh 'mkdir -p /home/jenkins/go/src/kubesphere.io'
+           sh "ln -s -f `pwd` /home/jenkins/go/src/kubesphere.io/devops"
            sh 'cd /home/jenkins/go/src/kubesphere.io/devops && make test'
          }
        }
