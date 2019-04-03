@@ -17,7 +17,7 @@ image:
 clean:
 	rm -rf cmd/server
 test:
-	go test $(TEST) -v -timeout 120m
+	go test $(TEST) -v -timeout 120m -coverprofile=test_coverage.out
 
 
 build-image-%: ## build docker image
