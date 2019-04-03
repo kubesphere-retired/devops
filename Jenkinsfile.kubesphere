@@ -5,6 +5,9 @@ pipeline {
     }
   }
   stages {
+    stage('unit test'){
+        sh 'make test'
+    }
     stage('sonarqube analysis'){
       steps{
         script {
