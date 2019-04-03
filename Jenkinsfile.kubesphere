@@ -6,7 +6,12 @@ pipeline {
   }
   stages {
     stage('unit test'){
-        sh 'make test'
+       steps{
+        container('go'){
+           ln -s `pwd` /home/jenkins/go/src/kubesphere.io/devops
+           sh 'make test'
+         }
+       }
     }
     stage('sonarqube analysis'){
       steps{
