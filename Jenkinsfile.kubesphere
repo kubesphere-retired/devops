@@ -24,6 +24,9 @@ pipeline {
                sh "${scannerHome}/bin/sonar-scanner -Dsonar.branch=$BRANCH_NAME -Dsonar.projectKey=ks-devops -Dsonar.sources=.  -Dsonar.login=$SONAR_TOKEN"
             }
         }
+        timeout(time: 1, unit: 'HOURS') {
+          waitForQualityGate abortPipeline: true
+        }
       }
     }
   }
