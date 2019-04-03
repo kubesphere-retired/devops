@@ -10,6 +10,7 @@ pipeline {
         container('go'){
            sh 'mkdir -p /home/jenkins/go/src/kubesphere.io/devops'
            sh "ln -s `pwd` /home/jenkins/go/src/kubesphere.io/devops"
+           input('')
            sh 'cd /home/jenkins/go/src/kubesphere.io/devops && make test'
          }
        }
