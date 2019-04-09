@@ -54,6 +54,15 @@ func (s *ProjectService) GetPipelineSonarHandler(w rest.ResponseWriter, r *rest.
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if len(sonarStatus) == 0 {
+		build, err := job.GetLastCompletedBuild()
+		if err != nil && stringutils.GetJenkinsStatusCode(err) != http.StatusNotFound {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+		sonarStatus, err = s.getBuildSonarResults(build)
+	}
 
 	w.WriteJson(sonarStatus)
 	return
@@ -89,6 +98,17 @@ func (s *ProjectService) GetMultiBranchPipelineSonarHandler(w rest.ResponseWrite
 		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	if len(sonarStatus) == 0 {
+		build, err := job.GetLastCompletedBuild()
+		if err != nil && stringutils.GetJenkinsStatusCode(err) != http.StatusNotFound {
+			logger.Error("%+v", err)
+			rest.Error(w, err.Error(), stringutils.GetJenkinsStatusCode(err))
+			return
+		}
+		sonarStatus, err = s.getBuildSonarResults(build)
+	}
+
 	w.WriteJson(sonarStatus)
 }
 
