@@ -77,6 +77,13 @@ func (p *Ds) connectJenkins() {
 			panic(err)
 		}
 	}
+	_, err = jenkins.AddProjectRole(constants.JenkinsAllUserRoleName, "\\n\\s*\\r", gojenkins.ProjectPermissionIds{
+		SCMTag: true,
+	}, true)
+	if err != nil {
+		logger.Critical("failed to create jenkins project role")
+		panic(err)
+	}
 
 }
 
